@@ -1,4 +1,5 @@
 from rdkit import Chem
+from collections import Counter
 import os
 
 #transfer to a utility functions
@@ -49,29 +50,62 @@ class Mol2ToMol:
 
 	def writeCppInput(self):
 		self.writeMolFile()
-		cppInput = open(self.fileMol2Name + "-cpp.inp", "w")
 		mol = Chem.MolFromMolFile(self.fileMol2Name + '.mol')
-		rank = list(Chem.CanonicalRankAtoms(mol, breakTies=True))
+		rank = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
 
+		xL = [] ; yL = [] ; zL = [] ; rankL = []
+		for i in self.__ligandBondedToMetal:
+			atomsColumns = self.__listAtoms[i-1].split()
+			xL.append(atomsColumns[2])
+			yL.append(atomsColumns[3])
+			zL.append(atomsColumns[4])
+			rankL.append(rank[i-1])
+		zipped = list(zip(rankL, xL, yL, zL))
+		zipped.sort()
+		rankL, xL, yL, zL = zip(*zipped)
+		
+		
+		
+		#function que me de a composicao dessa coisa
+		#menor quantidade menor letra.
+		#atribuir novos valores para o dicionario
+		#aplicar no rankL - substituindo os valores antigos pelos novos
+		#
+		
+		print(Counter(rankL))
+		dict = Counter(rankL)
+		dictElements = []
+		dictKeys = []
+		for comp in dict:
+			dictElements.append(dict[comp])
+			dictKeys.append(comp)
+		zipped2 = list(zip(dictElements, dictKeys))
+		zipped2.sort()
+		dictElements, dictKeys = zip(*zipped2)
+		print("keys:  ",dictKeys)
+		print("elements:  ", dictElements)
+
+		cppInput = open(self.fileMol2Name + "-cpp.inp", "w")
 		atomsColumns = self.__listAtoms[self.__iMetal - 1].split()
 		cppInput.write("{:>10}{:>10}{:>10}{:>5}\n".format(
 		atomsColumns[2],
 		atomsColumns[3],
 		atomsColumns[4],
 		"-1"))
-
-		xL = yL = zL = rankL = []
-		for i in self.__ligandBondedToMetal:
-			atomsColumns = self.__listAtoms[i-1].split()
+	
+		for i in range(len(xL)):
 			cppInput.write("{:>10}{:>10}{:>10}{:>5}\n".format(
-			atomsColumns[2],
-			atomsColumns[3],
-			atomsColumns[4],
-			rank[i-1]))
+			xL[i],
+			yL[i],
+			zL[i],
+			rankL[i]))
+
 		cppInput.write("end\n")
 		cppInput.close()
 	
-	
+
+
+
 	
 
 	def writeMolFile(self):

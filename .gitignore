@@ -1,1 +1,8 @@
 __*
+code/python/*.mol*
+code/python/*.inp
+code/python/*.csv
+code/python/*.exe
+code/python/*.xyz
+
+
