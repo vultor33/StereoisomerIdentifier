@@ -15,59 +15,47 @@ using namespace std;
 
 void StereoisomerIdentifier::identify(const string &fileName)
 {
-	vector<CoordXYZ> coordMol = readInput(fileName);
+	string molecularFormula;
+	vector<int> atomTypesCahnIngoldPrelog;
+	vector<CoordXYZ> coordMol = readInput(
+		fileName, 
+		molecularFormula,
+		atomTypesCahnIngoldPrelog);
 
-	int geoCode;
+	int geoCode, indexLine;
 	double rmsd;
 	std::vector<CoordXYZ> idealGeo = findShape(coordMol,geoCode,rmsd);
 
-	vector<CoordXYZ> inputGeometryLigands = coordMol;
-	inputGeometryLigands.erase(inputGeometryLigands.begin());
-	for (size_t i = 0; i < inputGeometryLigands.size(); i++)
-		inputGeometryLigands[i].atomlabel = setLabel(i);
-
+	vector<int> referenceLineVector;
 	Geometries geo_;
-	cout << "SHAPE:  " << geo_.sizeToGeometryCode(geoCode) << "  -  " << rmsd;
+	string isomerLine = findStereoisomer(
+		molecularFormula,
+		geoCode,
+		indexLine,
+		idealGeo,
+		coordMol, // remove metal and add labels
+		referenceLineVector,
+		atomTypesCahnIngoldPrelog);
 
-	std::vector<int> atomTypes;
-	std::vector<int> bidentateChosen;
-	vector<string> allPerm = readAllPermutations(
-		geo_.sizeToGeometryCode(geoCode) + ".csv",
-		"",
-		inputGeometryLigands.size(),
-		atomTypes,
-		bidentateChosen);
+	vector<string> countingLines = findCountingLine(coordMol.size(), geo_.sizeToGeometryCode(geoCode), molecularFormula);
 
+	ofstream results_;
+	results_.open("identifying-results.csv", std::ofstream::out | std::ofstream::app);
+	results_ << fileName << ";"
+		<< geo_.sizeToGeometryCode(geoCode) << ";"
+		<< rmsd << ";"
+		<< isomerLine << ";"
+		<< indexLine << ";";
+	for (size_t i = 0; i < countingLines.size(); i++)
+		results_ << countingLines[i] << ";";
+	results_ << endl;
+	results_.close();
 
-	double minimumDist = 1.0e99;
-	int minimumPermut = -1;
-	double auxDist;
-	MarquesEnantiomers mqRmsd_;
-	for (size_t i = 0; i < allPerm.size(); i++)
-	{
-		vector<CoordXYZ> outGeometry = inputGeometryLigands;
-		vector<int> bidentatePermutationRotated = bidentateChosen;
-		vector<int> permutationI = stringToPermutation(allPerm[i], atomTypes.size());
-		vector<CoordXYZ> molI = idealGeo;
-		for (size_t i = 0; i < molI.size(); i++)
-			molI[i].atomlabel = setLabel(atomTypes[permutationI[i]]);
-
-		auxDist = mqRmsd_.marquesRmsd(outGeometry, molI);
-
-		cout << "rmsd " << auxDist << endl;
-
-		if (auxDist < minimumDist)
-		{
-			minimumDist = auxDist;
-			minimumPermut = i;
-		}
-	}
-
-	cout << "rmsd isomero:  " << minimumDist << endl
-		<< "isomero:  " << minimumPermut << endl;
-
-
-
+	vector<int> permutationI = readCauchyNotationsEnantiomers(isomerLine, idealGeo.size());
+	for (size_t i = 0; i < idealGeo.size(); i++)
+		idealGeo[i].atomlabel = setLabel(referenceLineVector[permutationI[i] - 1]);
+	printMol(idealGeo, fileName + "-idealGeo.xyz");
+	printMol(coordMol, fileName + "-coordMol.xyz");
 
 }
 
@@ -76,29 +64,29 @@ string StereoisomerIdentifier::setLabel(int i)
 	switch (i)
 	{
 	case 0:
-		return "H";
-	case 1:
-		return "He";
-	case 2:
-		return "Li";
-	case 3:
-		return "Be";
-	case 4:
-		return "B";
-	case 5:
-		return "C";
-	case 6:
-		return "N";
-	case 7:
 		return "O";
-	case 8:
-		return "F";
-	case 9:
+	case 1:
+		return "P";
+	case 2:
+		return "N";
+	case 3:
+		return "I";
+	case 4:
 		return "Na";
+	case 5:
+		return "B";
+	case 6:
+		return "Se";
+	case 7:
+		return "C";
+	case 8:
+		return "He";
+	case 9:
+		return "Ca";
 	case 10:
-		return "Mg";
+		return "Ti";
 	case 11:
-		return "Al";
+		return "Sc";
 	default:
 		cout << "label not found - exiting" << endl;
 		exit(1);
@@ -125,12 +113,19 @@ void StereoisomerIdentifier::reescaleMetalLigandDistancesToOne(vector<CoordXYZ> 
 }
 
 
-std::vector<CoordXYZ> StereoisomerIdentifier::readInput(const std::string &fileName)
+std::vector<CoordXYZ> StereoisomerIdentifier::readInput(
+	const std::string &fileName, 
+	std::string &formula,
+	std::vector<int> &atomTypesCahnIngoldPrelog)
 {
 	ifstream input_(fileName.c_str());
 	string line;
+	getline(input_, line);
+	stringstream convertFormula;
+	convertFormula << line;
+	convertFormula >> formula;
+	
 	vector<double> xInp, yInp, zInp;
-	vector<int> rank;
 	while (getline(input_, line))
 	{
 		if (line == "end")
@@ -144,29 +139,20 @@ std::vector<CoordXYZ> StereoisomerIdentifier::readInput(const std::string &fileN
 		xInp.push_back(auxX);
 		yInp.push_back(auxY);
 		zInp.push_back(auxZ);
-		rank.push_back(auxRank);
+		atomTypesCahnIngoldPrelog.push_back(auxRank);
 	}
-	vector<int> instructions = auxMath_.vector_ordering(rank);
-	auxMath_.vector_ordering_with_instructions(xInp, instructions);
-	auxMath_.vector_ordering_with_instructions(yInp, instructions);
-	auxMath_.vector_ordering_with_instructions(zInp, instructions);
+	
 	size_t nCoord = xInp.size();
 	vector<CoordXYZ> coordMol;
-	CoordXYZ auxMol;
-	auxMol.x = xInp[nCoord - 1];
-	auxMol.y = yInp[nCoord - 1];
-	auxMol.z = zInp[nCoord - 1];
-	coordMol.push_back(auxMol);
-	for (size_t i = 0; i < rank.size() - 1; i++)
+	for (size_t i = 0; i < atomTypesCahnIngoldPrelog.size(); i++)
 	{
 		CoordXYZ auxMol2;
+		auxMol2.atomlabel = "H";
 		auxMol2.x = xInp[i];
 		auxMol2.y = yInp[i];
 		auxMol2.z = zInp[i];
 		coordMol.push_back(auxMol2);
 	}
-	for (size_t i = 0; i < coordMol.size(); i++)
-		coordMol[i].atomlabel = "H";
 	reescaleMetalLigandDistancesToOne(coordMol);
 	return coordMol;
 }
@@ -201,24 +187,12 @@ std::vector<CoordXYZ> StereoisomerIdentifier::findShape(
 		coord.insert(coord.begin(), metal);
 		for (size_t i = 0; i < coord.size(); i++)
 			coord[i].atomlabel = "H";
-		double rmsd = mrq_.marquesRmsd(coord, coord2);
+		double rmsd = mrq_.marquesRmsdEqualMass(coord, coord2); //metal removed - different rmsd
 		if (rmsd < rmsdMin)
 		{
 			iMin = i;
 			rmsdMin = rmsd;
 		}
-
-		ofstream out_;
-		out_.open(".teste.xyz", std::ofstream::out | std::ofstream::app);
-		out_ << coordMol.size() << endl << endl;
-		for (size_t i = 0; i < coordMol.size(); i++)
-		{
-			out_ << coord[i].atomlabel << "  "
-				<< coord[i].x << "  "
-				<< coord[i].y << "  "
-				<< coord[i].z << endl;
-		}
-		out_.close();
 	}
 	geoCode = avaibleGeometries[iMin];
 	rmsdShape = rmsdMin;
@@ -232,6 +206,84 @@ std::vector<CoordXYZ> StereoisomerIdentifier::findShape(
 		dummy,
 		reflecDummy);
 	return coord;
+
+}
+
+string StereoisomerIdentifier::findStereoisomer(
+	const std::string &molecularFormula,
+	const int geoCode,
+	int &indexLine,
+	const std::vector<CoordXYZ> &idealGeo,
+	std::vector<CoordXYZ> &coordMol,
+	std::vector<int> &atomTypes,
+	std::vector<int> &atomTypesCahnIngoldPrelog)
+{
+	coordMol.erase(coordMol.begin());
+	atomTypesCahnIngoldPrelog.erase(atomTypesCahnIngoldPrelog.begin());//metal removed
+	for (size_t i = 0; i < coordMol.size(); i++)
+		coordMol[i].atomlabel = setLabel(atomTypesCahnIngoldPrelog[i]);
+
+	vector<int> bidentateChosen;
+	Geometries geo_;
+	ReadWriteFormats rwf_;
+	string fileIsomerPath = filePath(coordMol.size(), geo_.sizeToGeometryCode(geoCode));
+	fileIsomerPath += geo_.sizeToGeometryCode(geoCode) + "-" + molecularFormula + ".csv";
+	ifstream fileIsomers_(fileIsomerPath.c_str());
+	int nBidentates = 0;
+	rwf_.readAtomTypesAndBidentateChosenFileWithLabels(
+		fileIsomers_,
+		atomTypes,
+		bidentateChosen,
+		coordMol.size(),
+		nBidentates);
+
+	double minimumRmsd = 1.0e99;
+	int minimumPermut = -1;
+	double auxRmsd;
+	MarquesEnantiomers mqRmsd_;
+	string line, minimumLine;
+	int iLine = 0;
+	while (!fileIsomers_.eof())
+	{
+		getline(fileIsomers_, line);
+		if (line == "")
+			continue;
+
+		iLine++;
+		vector<CoordXYZ> outGeometry = coordMol;
+		vector<int> bidentatePermutationRotated = bidentateChosen;
+		vector<int> permutationI = readCauchyNotationsEnantiomers(line, coordMol.size());
+		vector<CoordXYZ> molI = idealGeo;
+		for (size_t k = 0; k < molI.size(); k++)
+			molI[k].atomlabel = setLabel(atomTypes[permutationI[k]-1]);
+
+		auxRmsd = mqRmsd_.marquesRmsdEqualMass(outGeometry, molI);
+
+		if (auxRmsd < minimumRmsd)
+		{
+			minimumRmsd = auxRmsd;
+			minimumLine = line;
+			indexLine = iLine;
+		}
+	}
+
+	return minimumLine;
+}
+
+
+
+void StereoisomerIdentifier::printMol(const std::vector<CoordXYZ> &mol, const std::string &fileName)
+{
+	ofstream out_(fileName.c_str());
+	out_ << mol.size() << endl << endl;
+	for (size_t i = 0; i < mol.size(); i++)
+	{
+		out_ << mol[i].atomlabel << "  "
+			<< mol[i].x * 3.0e0 << "  "
+			<< mol[i].y * 3.0e0 << "  "
+			<< mol[i].z * 3.0e0 << endl;
+	}
+	out_.close();
 
 }
 
@@ -306,6 +358,27 @@ vector<int> StereoisomerIdentifier::readCauchyNotationsEnantiomers(ifstream & op
 	return notation;
 }
 
+vector<int> StereoisomerIdentifier::readCauchyNotationsEnantiomers(string & line, int size)
+{
+	vector<int> notation;
+
+	if (line == "")
+		return notation;
+	notation.resize(size);
+
+	size_t brack1Temp = line.find("]");
+	size_t brack1 = line.find("[", brack1Temp + 1, 1);
+	size_t brack2 = line.find("]", brack1Temp + 1, 1);
+	string permString = line.substr(brack1 + 1, brack2 - brack1 - 1);
+	stringstream convert;
+	convert << permString;
+	for (int i = 0; i < size; i++)
+	{
+		convert >> notation[i];
+	}
+	return notation;
+}
+
 string StereoisomerIdentifier::permutationToString0Correction(vector<int> &permutation)
 {
 	stringstream permt;
@@ -324,4 +397,44 @@ vector<int> StereoisomerIdentifier::stringToPermutation(string entryString, size
 		convert >> permutation[i];
 	}
 	return permutation;
+}
+
+std::string StereoisomerIdentifier::filePath(int coordination, const std::string &shape)
+{
+	string file = "Stereoisomerlist\\";
+	stringstream convert;
+	string coordString;
+	convert << coordination;
+	convert >> coordString;
+	file += "CN" + coordString + "\\";
+	file += shape + "\\";
+	return file;
+}
+
+std::vector<std::string> StereoisomerIdentifier::findCountingLine(int coordination,
+	const std::string &shape,
+	const std::string &formula)
+{
+	string file = filePath(coordination, shape);
+	file += shape + "-counting.csv";
+	ifstream count_(file.c_str());
+	string line;
+	vector<string> numbersLine;
+	while (getline(count_, line))
+	{
+		string auxFormula = line.substr(0,line.find(";"));
+		if (auxFormula == formula)
+		{
+			numbersLine.push_back(line);
+			string line2;
+			while (getline(count_, line2))
+			{
+				if (line2[0] != ';')
+					break;
+				numbersLine.push_back(line2);
+			}
+			break;
+		}
+	}
+	return numbersLine;
 }
