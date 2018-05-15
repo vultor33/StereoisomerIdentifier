@@ -11,10 +11,11 @@ executar:
 python main.py
 
 
->>> s = '12abcd405'
->>> result = ''.join([i for i in s if not i.isdigit()])
->>> result
-'abcd'
+para rodar precisa do executavel do cpp
+
+e da pasta StereoisomerList - que esta no dropbox : 
+!PROJETOS/StereoisomerIdentifier
+
 
 
 

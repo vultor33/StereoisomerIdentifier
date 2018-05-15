@@ -11,14 +11,6 @@ justLetters = lambda enterString : ''.join([i for i in enterString if not i.isdi
 class Mol2ToMol:
 	"""Class to handle mol2 and mol files"""
 
-	#constant
-	__flagMolecule = "@<TRIPOS>MOLECULE"
-	__flagAtom = "@<TRIPOS>ATOM"
-	__flagBond = "@<TRIPOS>BOND"
-	__alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l']
-	__allMetals = ["Eu", "Fe", "V"]
-	
-
 	def __init__(self, fileMol2Name):
 		#Defining class variables
 		self.__fileStream = ""
@@ -29,6 +21,7 @@ class Mol2ToMol:
 		self.__metalBondsLines = [] # indexed to __listBonds
 		self.__ligandBondedToMetal = [] # start with 1 - subtract one to get corresponding atoms
 		self.fileMol2Name = ""
+		self.sucess = True
 
 		fileName, fileExtension = os.path.splitext(fileMol2Name)
 		if not fileExtension == '.mol2':
@@ -54,7 +47,9 @@ class Mol2ToMol:
 
 
 	def writeCppInput(self):
-		self.writeMolFile()
+		if len(self.__ligandBondedToMetal) == 0:
+			return
+		self._writeMolFile()
 		mol = Chem.MolFromMolFile(self.fileMol2Name + '.mol')
 		rank = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
 
@@ -83,7 +78,7 @@ class Mol2ToMol:
 
 	
 
-	def writeMolFile(self):
+	def _writeMolFile(self):
 		molFile = open(self.fileMol2Name + ".mol", "w")
 		molFile.write(self.__molName)
 		molFile.write("\n")
@@ -153,6 +148,7 @@ class Mol2ToMol:
 
 		if len(metalsInMol2File) > 1:
 			print("Too many metals")
+			self.sucess = False
 			return
 
 		self.__iMetal = metalsInMol2File[0] + 1
@@ -204,6 +200,19 @@ class Mol2ToMol:
 		return molecularFormula
 	
 
+
+
+	#constant
+	__flagMolecule = "@<TRIPOS>MOLECULE"
+	__flagAtom = "@<TRIPOS>ATOM"
+	__flagBond = "@<TRIPOS>BOND"
+	__alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l']
+	__allMetals = ["Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn",
+	"Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd",
+	"La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu",
+	"Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg",
+	"Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr",
+	"Rf","Db","Sg","Bh","Hs","Mt","Ds","Rg","Uub"]
 
 if __name__ ==  "__main__":
 	print("Module to handle Mol files")
