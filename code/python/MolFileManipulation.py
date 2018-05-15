@@ -5,6 +5,9 @@ import os
 #transfer to a utility functions
 justLetters = lambda enterString : ''.join([i for i in enterString if not i.isdigit()])
 
+# !!!!!!ADICIONAR PROTECAO CONTRA USUARIOS EM: self._extractMol2Info()
+
+
 class Mol2ToMol:
 	"""Class to handle mol2 and mol files"""
 
@@ -12,7 +15,9 @@ class Mol2ToMol:
 	__flagMolecule = "@<TRIPOS>MOLECULE"
 	__flagAtom = "@<TRIPOS>ATOM"
 	__flagBond = "@<TRIPOS>BOND"
+	__alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l']
 	__allMetals = ["Eu", "Fe", "V"]
+	
 
 	def __init__(self, fileMol2Name):
 		#Defining class variables
@@ -53,58 +58,28 @@ class Mol2ToMol:
 		mol = Chem.MolFromMolFile(self.fileMol2Name + '.mol')
 		rank = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
 
-		xL = [] ; yL = [] ; zL = [] ; rankL = []
-		for i in self.__ligandBondedToMetal:
-			atomsColumns = self.__listAtoms[i-1].split()
-			xL.append(atomsColumns[2])
-			yL.append(atomsColumns[3])
-			zL.append(atomsColumns[4])
-			rankL.append(rank[i-1])
-		zipped = list(zip(rankL, xL, yL, zL))
-		zipped.sort()
-		rankL, xL, yL, zL = zip(*zipped)
-		
-		
-		
-		#function que me de a composicao dessa coisa
-		#menor quantidade menor letra.
-		#atribuir novos valores para o dicionario
-		#aplicar no rankL - substituindo os valores antigos pelos novos
-		#
-		
-		print(Counter(rankL))
-		dict = Counter(rankL)
-		dictElements = []
-		dictKeys = []
-		for comp in dict:
-			dictElements.append(dict[comp])
-			dictKeys.append(comp)
-		zipped2 = list(zip(dictElements, dictKeys))
-		zipped2.sort()
-		dictElements, dictKeys = zip(*zipped2)
-		print("keys:  ",dictKeys)
-		print("elements:  ", dictElements)
-
+		rankL = []
+		formula = self._generateMolecularFormula(rankL, rank)
+	
 		cppInput = open(self.fileMol2Name + "-cpp.inp", "w")
+		cppInput.write(formula + "\n")
 		atomsColumns = self.__listAtoms[self.__iMetal - 1].split()
 		cppInput.write("{:>10}{:>10}{:>10}{:>5}\n".format(
 		atomsColumns[2],
 		atomsColumns[3],
 		atomsColumns[4],
 		"-1"))
-	
-		for i in range(len(xL)):
+		listRankL = iter(rankL)
+		for i in self.__ligandBondedToMetal:
+			atomsColumns = self.__listAtoms[i-1].split()
 			cppInput.write("{:>10}{:>10}{:>10}{:>5}\n".format(
-			xL[i],
-			yL[i],
-			zL[i],
-			rankL[i]))
-
+			atomsColumns[2],
+			atomsColumns[3],
+			atomsColumns[4],
+			next(listRankL)))
+	
 		cppInput.write("end\n")
 		cppInput.close()
-	
-
-
 
 	
 
@@ -149,7 +124,6 @@ class Mol2ToMol:
 
 	def _extractMol2Info(self):
 		i = 0
-		# !!!!!!ADICIONAR PROTECAO CONTRA USUARIOS AQUI!!!!!!
 		while i < len(self.__fileStream):
 			if self.__fileStream[i].find(self.__flagMolecule) > -1:
 				i+=1
@@ -195,6 +169,39 @@ class Mol2ToMol:
 		
 			i+=1
 
+	
+	def _generateMolecularFormula(self, rankL, rank):	
+		for i in self.__ligandBondedToMetal:
+			atomsColumns = self.__listAtoms[i-1].split()
+			rankL.append(rank[i-1])
+	
+		rankLCounting = Counter(rankL)
+		rankLCountingElems = []
+		rankLCountingKeys = []
+		for comp in rankLCounting:
+			rankLCountingElems.append(rankLCounting[comp])
+			rankLCountingKeys.append(comp)
+
+		zipped = list(zip(rankLCountingElems, rankLCountingKeys))
+		zipped.sort()
+		rankLCountingElems, rankLCountingKeys = zip(*zipped)
+		ligandsAmount = list(rankLCountingElems)
+		ligandsAmount.reverse()
+		ligandTypes = self.__alphabet[:len(ligandsAmount)]
+		molecularFormula = "M"
+		i = 0		
+		while i < len(ligandTypes):
+			if ligandsAmount[i] == 1:
+				molecularFormula += ligandTypes[i]
+			else:
+				molecularFormula += ligandTypes[i] + str(ligandsAmount[i])
+			i+=1
+		newRankL = []
+		for iRank in rankL:
+			newRankL.append(rankLCountingKeys.index(iRank))
+		for i in range(len(newRankL)):
+			rankL[i] = newRankL[i]
+		return molecularFormula
 	
 
 
