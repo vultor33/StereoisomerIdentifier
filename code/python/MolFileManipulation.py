@@ -1,12 +1,13 @@
+import os
+import subprocess
 from rdkit import Chem
 from collections import Counter
-import os
 
 #transfer to a utility functions
-justLetters = lambda enterString : ''.join([i for i in enterString if not i.isdigit()])
 
-# !!!!!!ADICIONAR PROTECAO CONTRA USUARIOS EM: self._extractMol2Info()
+untilPoint = lambda enterString : enterString.partition(".")[0]
 
+justLetters = lambda enterString : ''.join([i for i in enterString if i.isalpha()])
 
 class Mol2ToMol:
 	"""Class to handle mol2 and mol files"""
@@ -20,14 +21,12 @@ class Mol2ToMol:
 		self.__iMetal = 0
 		self.__metalBondsLines = [] # indexed to __listBonds
 		self.__ligandBondedToMetal = [] # start with 1 - subtract one to get corresponding atoms
-		self.fileMol2Name = ""
-		self.sucess = True
+		self.__fileMol2Name = ""
 
-		fileName, fileExtension = os.path.splitext(fileMol2Name)
+		self.__fileMol2Name, fileExtension = os.path.splitext(fileMol2Name)
 		if not fileExtension == '.mol2':
 			return
-		self.fileMol2Name = fileName
-	
+
 		#Read mol2 file
 		mol2Input = open(fileMol2Name,"r")
 		self.__fileStream = mol2Input.read().splitlines()
@@ -47,16 +46,15 @@ class Mol2ToMol:
 
 
 	def writeCppInput(self):
-		if len(self.__ligandBondedToMetal) == 0:
-			return
-		self._writeMolFile()
-		mol = Chem.MolFromMolFile(self.fileMol2Name + '.mol')
+		mol = Chem.MolFromMol2File(self.__fileMol2Name + '.mol2', removeHs = False)
+		if mol == None:
+			raise Exception('Chem.MolFromMol2File failed')
 		rank = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
 
 		rankL = []
 		formula = self._generateMolecularFormula(rankL, rank)
 	
-		cppInput = open(self.fileMol2Name + "-cpp.inp", "w")
+		cppInput = open(self.__fileMol2Name + "-cpp.inp", "w")
 		cppInput.write(formula + "\n")
 		atomsColumns = self.__listAtoms[self.__iMetal - 1].split()
 		cppInput.write("{:>10}{:>10}{:>10}{:>5}\n".format(
@@ -76,46 +74,10 @@ class Mol2ToMol:
 		cppInput.write("end\n")
 		cppInput.close()
 
+	def runStereoisomerIdentifierRmsd(self):
+		subprocess.call("StereoisomerIdentifierRmsd.exe " + self.__fileMol2Name + "-cpp.inp", shell=True)
 	
 
-	def _writeMolFile(self):
-		molFile = open(self.fileMol2Name + ".mol", "w")
-		molFile.write(self.__molName)
-		molFile.write("\n")
-		molFile.write("StereoisomerIdentifier\n\n")
-		molFile.write("{:>3}{:>3}".format(
-		str(len(self.__listAtoms)),
-		str(len(self.__listBonds) - len(self.__metalBondsLines))))
-		molFile.write("  0     0  0  0  0  0  0999 V2000")
-		molFile.write("\n")
-		i = 0
-		
-		for atomLine in self.__listAtoms:
-			listAtomsColumns = atomLine.split()
-			molFile.write("{:>10}{:>10}{:>10}".format(
-			listAtomsColumns[2],
-			listAtomsColumns[3],
-			listAtomsColumns[4]))
-			molFile.write(" ")
-			molFile.write(justLetters(listAtomsColumns[1]))
-			molFile.write("  0  0  0  0  0  0  0  0  0  0  0  0")
-			molFile.write("\n")
-		
-		i = 0
-		while i < len(self.__listBonds):
-			if i in self.__metalBondsLines:
-				i+=1
-				continue
-			listBondsColumns = self.__listBonds[i].split()
-			molFile.write("{:>3}{:>3}".format(
-			listBondsColumns[1],
-			listBondsColumns[2]))
-			molFile.write("  1  0  0  0")
-			molFile.write("\n")
-			i+=1
-			
-		molFile.write("M  END\n")
-		molFile.close()
 
 	def _extractMol2Info(self):
 		i = 0
@@ -141,15 +103,14 @@ class Mol2ToMol:
 		metalsInMol2File = []
 		while i < len(self.__listAtoms):
 			listAtomsColumns = self.__listAtoms[i].split()
-			for atom in self.__allMetals:
-				if listAtomsColumns[1].find(atom) > -1:
-					metalsInMol2File.append(i)
+			if untilPoint(listAtomsColumns[5]) in self.__allMetals:
+				metalsInMol2File.append(i)
+				print("i:  ",i, "  metal:  ",listAtomsColumns[5])
 			i+=1
 
-		if len(metalsInMol2File) > 1:
-			print("Too many metals")
-			self.sucess = False
-			return
+		
+		if len(metalsInMol2File) != 1:
+			raise Exception("Metal number error")
 
 		self.__iMetal = metalsInMol2File[0] + 1
 		i = 0
@@ -198,6 +159,58 @@ class Mol2ToMol:
 		for i in range(len(newRankL)):
 			rankL[i] = newRankL[i]
 		return molecularFormula
+
+
+
+
+
+
+
+
+
+
+	
+
+	# DEACTIVATED - loading mol2 file
+	def _writeMolFile(self):
+		molFile = open(self.__fileMol2Name + ".mol", "w")
+		molFile.write(self.__molName)
+		molFile.write("\n")
+		molFile.write("StereoisomerIdentifier\n\n")
+		molFile.write("{:>3}{:>3}".format(
+		str(len(self.__listAtoms)),
+		str(len(self.__listBonds) - len(self.__metalBondsLines))))
+		molFile.write("  0     0  0  0  0  0  0999 V2000")
+		molFile.write("\n")
+		i = 0
+		
+		for atomLine in self.__listAtoms:
+			listAtomsColumns = atomLine.split()
+			molFile.write("{:>10}{:>10}{:>10}".format(
+			listAtomsColumns[2],
+			listAtomsColumns[3],
+			listAtomsColumns[4]))
+			molFile.write(" ")
+			molFile.write(untilPoint(listAtomsColumns[5]))
+			molFile.write("  0  0  0  0  0  0  0  0  0  0  0  0")
+			molFile.write("\n")
+		
+		i = 0
+		while i < len(self.__listBonds):
+			if i in self.__metalBondsLines:
+				i+=1
+				continue
+			listBondsColumns = self.__listBonds[i].split()
+			molFile.write("{:>3}{:>3}".format(
+			listBondsColumns[1],
+			listBondsColumns[2]))
+			molFile.write("  1  0  0  0")
+			molFile.write("\n")
+			i+=1
+			
+		molFile.write("M  END\n")
+		molFile.close()
+
 	
 
 
