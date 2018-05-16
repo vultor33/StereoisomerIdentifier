@@ -18,10 +18,9 @@ class Mol2ToMol:
 		self.__molName = ""
 		self.__listAtoms = []
 		self.__listBonds = []
-		self.__iMetal = 0
-		self.__metalBondsLines = [] # indexed to __listBonds
-		self.__ligandBondedToMetal = [] # start with 1 - subtract one to get corresponding atoms
+		self.__metalsInMol2File = []
 		self.__fileMol2Name = ""
+		self.__equivalenceRank = []
 
 		self.__fileMol2Name, fileExtension = os.path.splitext(fileMol2Name)
 		if not fileExtension == '.mol2':
@@ -33,49 +32,22 @@ class Mol2ToMol:
 		self._extractMol2Info()
 		mol2Input.close()
 
+		#Canonicalizing
+		mol = Chem.MolFromMol2File(self.__fileMol2Name + '.mol2', removeHs = False)
+		if mol == None:
+			raise Exception('Chem.MolFromMol2File failed')
+		self.__equivalenceRank = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
+
 	def printInfo(self):
 		print("molName: ",self.__molName)
 		print("\n\nAtoms:\n\n",*self.__listAtoms,sep="\n")
 		print("\n\nBonds:\n\n",*self.__listBonds,sep="\n")
 		print("metal bond lines: ",self.__metalBondsLines)
-		print("ligand bond: ",self.__ligandBondedToMetal)
-		for iMetalBond in self.__metalBondsLines:
-			print("bond: ",self.__listBonds[iMetalBond])
-		for iLigandBond in self.__ligandBondedToMetal:
-			print("ligands: ",self.__listAtoms[iLigandBond-1])
-
-
-	def writeCppInput(self):
-		mol = Chem.MolFromMol2File(self.__fileMol2Name + '.mol2', removeHs = False)
-		if mol == None:
-			raise Exception('Chem.MolFromMol2File failed')
-		rank = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
-
-		rankL = []
-		formula = self._generateMolecularFormula(rankL, rank)
-	
-		cppInput = open(self.__fileMol2Name + "-cpp.inp", "w")
-		cppInput.write(formula + "\n")
-		atomsColumns = self.__listAtoms[self.__iMetal - 1].split()
-		cppInput.write("{:>10}{:>10}{:>10}{:>5}\n".format(
-		atomsColumns[2],
-		atomsColumns[3],
-		atomsColumns[4],
-		"-1"))
-		listRankL = iter(rankL)
-		for i in self.__ligandBondedToMetal:
-			atomsColumns = self.__listAtoms[i-1].split()
-			cppInput.write("{:>10}{:>10}{:>10}{:>5}\n".format(
-			atomsColumns[2],
-			atomsColumns[3],
-			atomsColumns[4],
-			next(listRankL)))
-	
-		cppInput.write("end\n")
-		cppInput.close()
 
 	def runStereoisomerIdentifierRmsd(self):
-		subprocess.call("StereoisomerIdentifierRmsd.exe " + self.__fileMol2Name + "-cpp.inp", shell=True)
+		for iMetal in self.__metalsInMol2File:
+			self._writeCppInput(int(iMetal) + 1)
+			subprocess.call("StereoisomerIdentifierRmsd.exe " + self.__fileMol2Name + "-cpp.inp", shell=True)
 	
 
 
@@ -100,37 +72,19 @@ class Mol2ToMol:
 			i+=1
 
 		i = 0
-		metalsInMol2File = []
 		while i < len(self.__listAtoms):
 			listAtomsColumns = self.__listAtoms[i].split()
 			if untilPoint(listAtomsColumns[5]) in self.__allMetals:
-				metalsInMol2File.append(i)
-				print("i:  ",i, "  metal:  ",listAtomsColumns[5])
+				self.__metalsInMol2File.append(i)
 			i+=1
-
-		
-		if len(metalsInMol2File) != 1:
+			
+		if len(self.__metalsInMol2File) < 1:
 			raise Exception("Metal number error")
 
-		self.__iMetal = metalsInMol2File[0] + 1
-		i = 0
-		while i < len(self.__listBonds):
-			auxB1 = int(self.__listBonds[i].split()[1])
-			auxB2 = int(self.__listBonds[i].split()[2])
-			if auxB1 == self.__iMetal:
-				self.__ligandBondedToMetal.append(auxB2)		
-				self.__metalBondsLines.append(i)
-			if auxB2 == self.__iMetal:
-				self.__ligandBondedToMetal.append(auxB1)
-				self.__metalBondsLines.append(i)
-		
-			i+=1
-
-	
-	def _generateMolecularFormula(self, rankL, rank):	
-		for i in self.__ligandBondedToMetal:
+	def _generateMolecularFormula(self, rankL, ligandsBondedToMetal):	
+		for i in ligandsBondedToMetal:
 			atomsColumns = self.__listAtoms[i-1].split()
-			rankL.append(rank[i-1])
+			rankL.append(self.__equivalenceRank[i-1])
 	
 		rankLCounting = Counter(rankL)
 		rankLCountingElems = []
@@ -161,6 +115,41 @@ class Mol2ToMol:
 		return molecularFormula
 
 
+	def _writeCppInput(self, iMetal):
+		ligandsBondedToMetal = []
+		i = 0
+		while i < len(self.__listBonds):
+			auxB1 = int(self.__listBonds[i].split()[1])
+			auxB2 = int(self.__listBonds[i].split()[2])
+			if auxB1 == iMetal:
+				ligandsBondedToMetal.append(auxB2)		
+			if auxB2 == iMetal:
+				ligandsBondedToMetal.append(auxB1)
+			i+=1
+
+		if len(ligandsBondedToMetal) > 9 or len(ligandsBondedToMetal) < 4:
+			raise Exception("Number of ligands error")
+
+		rankL = []
+		formula = self._generateMolecularFormula(rankL, ligandsBondedToMetal)
+		cppInput = open(self.__fileMol2Name + "-cpp.inp", "w")
+		cppInput.write(formula + "\n")
+		atomsColumns = self.__listAtoms[iMetal - 1].split()
+		cppInput.write("{:>10}{:>10}{:>10}{:>5}\n".format(
+		atomsColumns[2],
+		atomsColumns[3],
+		atomsColumns[4],
+		"-1"))
+		listRankL = iter(rankL)
+		for i in ligandsBondedToMetal:
+			atomsColumns = self.__listAtoms[i-1].split()
+			cppInput.write("{:>10}{:>10}{:>10}{:>5}\n".format(
+			atomsColumns[2],
+			atomsColumns[3],
+			atomsColumns[4],
+			next(listRankL)))
+		cppInput.write("end\n")
+		cppInput.close()
 
 
 
@@ -173,6 +162,23 @@ class Mol2ToMol:
 
 	# DEACTIVATED - loading mol2 file
 	def _writeMolFile(self):
+		raise Exception("_writeMolFile deactivated")
+
+		# This function need the following rules
+		#self.__iMetal = metalsInMol2File[0] + 1
+		#i = 0
+		#while i < len(self.__listBonds):
+		#	auxB1 = int(self.__listBonds[i].split()[1])
+		#	auxB2 = int(self.__listBonds[i].split()[2])
+		#	if auxB1 == self.__iMetal:
+		#		self.__ligandBondedToMetal.append(auxB2)		
+		#		self.__metalBondsLines.append(i)
+		#	if auxB2 == self.__iMetal:
+		#		self.__ligandBondedToMetal.append(auxB1)
+		#		self.__metalBondsLines.append(i)
+		#	i+=1
+	
+	
 		molFile = open(self.__fileMol2Name + ".mol", "w")
 		molFile.write(self.__molName)
 		molFile.write("\n")
