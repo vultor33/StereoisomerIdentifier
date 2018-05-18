@@ -40,6 +40,7 @@ private:
 		const std::string &molecularFormula,
 		const int geoCode,
 		int &minimumLine,
+		std::string &stereoLetter,
 		const std::vector<CoordXYZ> &idealGeo,
 		std::vector<CoordXYZ> &coordMol,
 		std::vector<int> &atomTypes,

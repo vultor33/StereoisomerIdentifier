@@ -28,10 +28,12 @@ void StereoisomerIdentifier::identify(const string &fileName)
 
 	vector<int> referenceLineVector;
 	Geometries geo_;
+	string stereoLetter;
 	string isomerLine = findStereoisomer(
 		molecularFormula,
 		geoCode,
 		indexLine,
+		stereoLetter,
 		idealGeo,
 		coordMol, // remove metal and add labels
 		referenceLineVector,
@@ -42,10 +44,9 @@ void StereoisomerIdentifier::identify(const string &fileName)
 	ofstream results_;
 	results_.open("identifying-results.csv", std::ofstream::out | std::ofstream::app);
 	results_ << fileName << ";"
-		<< geo_.sizeToGeometryCode(geoCode) << ";"
+		<< geo_.sizeToGeometryCodeLetter(geoCode) << "-" << stereoLetter << indexLine << ";"
 		<< rmsd << ";"
-		<< isomerLine << ";"
-		<< indexLine << ";";
+		<< isomerLine << ";";
 	for (size_t i = 0; i < countingLines.size(); i++)
 		results_ << countingLines[i] << ";";
 	results_ << endl;
@@ -213,6 +214,7 @@ string StereoisomerIdentifier::findStereoisomer(
 	const std::string &molecularFormula,
 	const int geoCode,
 	int &indexLine,
+	std::string &stereoLetter,
 	const std::vector<CoordXYZ> &idealGeo,
 	std::vector<CoordXYZ> &coordMol,
 	std::vector<int> &atomTypes,
@@ -241,11 +243,17 @@ string StereoisomerIdentifier::findStereoisomer(
 	int minimumPermut = -1;
 	double auxRmsd;
 	MarquesEnantiomers mqRmsd_;
-	string line, minimumLine;
-	int iLine = 0;
+	string line, minimumLine, iStereoLetter;
+	int iLine;
 	while (!fileIsomers_.eof())
 	{
 		getline(fileIsomers_, line);
+		if (line == "G" || line == "R" || line == "S")
+		{
+			iStereoLetter = line;
+			iLine = 0;
+			continue;
+		}
 		if (line == "")
 			continue;
 
@@ -264,9 +272,9 @@ string StereoisomerIdentifier::findStereoisomer(
 			minimumRmsd = auxRmsd;
 			minimumLine = line;
 			indexLine = iLine;
+			stereoLetter = iStereoLetter;
 		}
 	}
-
 	return minimumLine;
 }
 

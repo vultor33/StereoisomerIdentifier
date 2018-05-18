@@ -764,6 +764,194 @@ string Geometries::sizeToGeometryCode(int geoCode)
 }
 
 
+string Geometries::sizeToGeometryCodeLetter(int geoCode)
+{
+	switch (geoCode)
+	{
+	case 40:
+		return "T4";
+		break;
+
+	case 41:
+		return "SP4";
+		break;
+
+	case 42:
+		return "SS4";
+		break;
+
+	case 43:
+		return "vTBPY4";
+		break;
+
+	case 50:
+		return "TBPY5";
+		break;
+
+	case 51:
+		return "SPY5";
+		break;
+
+	case 52:
+		return "vOC5";
+		break;
+
+	case 53:
+		return "PP5";
+		break;
+
+	case 60:
+		return "OC6";
+		break;
+
+	case 61:
+		return "TPR6";
+		break;
+
+	case 62:
+		return "HP6";
+		break;
+
+	case 63:
+		return "PPY6";
+		break;
+
+	case 70:
+		return "COC7";
+		break;
+
+	case 71:
+		return "PBPY7";
+		break;
+
+	case 72:
+		return "CTPR7";
+		break;
+
+	case 73:
+		return "HPY7";
+		break;
+
+	case 74:
+		return "HP7";
+		break;
+
+	case 75:
+		return "JETPY7";
+		break;
+
+	case 80:
+		return "SAPR8";
+		break;
+
+	case 81:
+		return "TDD8";
+		break;
+
+	case 82:
+		return "BTPR8";
+		break;
+
+	case 83:
+		return "HBPY8";
+		break;
+
+	case 84:
+		return "CU8";
+		break;
+
+	case 85:
+		return "ETBPY8";
+		break;
+
+	case 86:
+		return "HPY8";
+		break;
+
+	case 87:
+		return "OP8";
+		break;
+
+	case 88:
+		return "JGBF8";
+		break;
+
+	case 90:
+		return "TCTPR9";
+		break;
+
+	case 91:
+		return "CSAPR9";
+		break;
+
+	case 92:
+		return "MFF9";
+		break;
+
+	case 93:
+		return "CCU9";
+		break;
+
+	case 94:
+		return "HH9";
+		break;
+
+	case 95:
+		return "OPY9";
+		break;
+
+	case 96:
+		return "EP9";
+		break;
+
+	case 97:
+		return "HBPY9";
+		break;
+
+	case 98:
+		return "JTC9";
+		break;
+
+	case 99:
+		return "JTDIC9";
+		break;
+
+	case 100:
+		return "PointSphere10";
+		break;
+
+	case 101:
+		return "TD10";
+		break;
+
+	case 102:
+		return "JSPC10";
+		break;
+
+	case 103:
+		return "JBCSAPR10";
+		break;
+
+	case 110:
+		return "JCPAPR11";
+		break;
+
+	case 120:
+		return "IC12";
+		break;
+
+	default:
+		cout << "Geometry not found" << endl;
+		exit(1);
+		break;
+	}
+
+
+}
+
+
+
+
 std::vector<int> Geometries::avaibleGeometries(int nCoordination)
 {
 	vector<int> avaible;

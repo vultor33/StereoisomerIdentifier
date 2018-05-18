@@ -30,6 +30,8 @@ public:
 
 	std::string sizeToGeometryCode(int size);
 
+	std::string sizeToGeometryCodeLetter(int size);
+
 	std::vector<int> avaibleGeometries(int nCoordination);
 
 private:
