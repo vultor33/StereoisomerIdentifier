@@ -5,6 +5,7 @@ code/python/*.csv
 code/python/*.exe
 code/python/*.xyz
 code/python/*.txt
+code/python/rotations*
 code/python/StereoisomerList*
 
 

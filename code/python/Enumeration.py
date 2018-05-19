@@ -2,12 +2,65 @@
 class Enumeration:
 	"""Class to enumerate stereoisomers"""
 
-	def __init__(self, allRotations, substratal):
-		self.__allRot = allRotations
-		self.__substratal = []
-		self._correctSubstratal(substratal)
+	def __init__(self):
+		self.__allRot = []
+		self.__substratalG = []
+		self.__substratalR = []
+		self.__substratalS = []
 
-	def makeEnumeration(self, colorFirst, chelateFirst, rcw, stereoRemoved):
+	def setRotations(self, allRotations):
+		self.__allRot = allRotations
+		
+	def setSubstratal(self, substratal, letter):
+		self._correctSubstratal(substratal,letter)
+
+	def readRotations(self, geoCode):
+		fileName = "rotations//rotations-" + str(geoCode) + ".txt"
+		rotInput = open(fileName,"r")
+		rotFileStream = rotInput.read().splitlines()
+		for line in rotFileStream:
+			rotI = []
+			for iNum in line.split():
+				rotI.append(int(float(iNum)))
+			self.__allRot.append(rotI)
+			
+	def readScaffold(self, geoCode):
+		fileName = 'Stereoisomerlist//CN6//OC-6//OC-6-Mabcdef.csv'  # LEEEEEEEEEEEEEEEEEEEEERRRR A PARTIR DO GEO CODE
+		scaInput = open(fileName,"r")
+		scaFileStream = scaInput.read().splitlines()
+		i = 2
+		iLetter = 'G'
+		substratalG = []
+		substratalR = []
+		substratalS = []
+		while i < len(scaFileStream):
+			if scaFileStream[i] == '':
+				break
+			if scaFileStream[i] == 'R':
+				iLetter = 'R'
+				i+=1
+				continue
+			if scaFileStream[i] == 'S':
+				iLetter = 'S'
+				i+=1
+				continue
+			if iLetter == 'G':
+				substratalG.append(self._takePermutation(scaFileStream[i]))
+			elif iLetter == 'R':
+				substratalR.append(self._takePermutation(scaFileStream[i]))
+			elif iLetter == 'S':
+				substratalS.append(self._takePermutation(scaFileStream[i]))
+			i+=1
+		
+		self._correctSubstratal(substratalG, 'G')
+		self._correctSubstratal(substratalR, 'R')
+		self._correctSubstratal(substratalS, 'S')
+		print('sca G: ',self.__substratalG)
+		print('sca R: ',self.__substratalR)
+		print('sca S: ',self.__substratalS)
+	
+
+	def makeEnumeration(self, colorFirst, chelateFirst, rcw, stereoRemoved): # REFAZEEER
 		i = 0
 		while i < len(self.__substratal) - 1:
 			j = i + 1
@@ -77,7 +130,7 @@ class Enumeration:
 				while i < len(lisChelate2):
 					chelRotI = self._applyRotationChelate(lisChelate2[i],rotation)
 					chelRotI.sort()
-					if lisChelate1[i] != chelRotI: # WARNING - nao sei se a ordem importa - talve substituir por 'chelRotI in lisChelate'
+					if chelRotI in lisChelate1:
 						equal = False
 						break
 					i+=1
@@ -87,12 +140,35 @@ class Enumeration:
 		return False
 
 	
-	def _correctSubstratal(self, substratal):
+	def _takePermutation(self, line):
+		i = 0
+		firstBrac = False
+		permut = []
+		while i < len(line):
+			if line[i] == '[' and firstBrac:
+				i+=1
+				while line[i] != ']':
+					if line[i] != ' ':
+						permut.append(int(float(line[i])))
+					i+=1
+			elif line[i] == '[':
+				firstBrac = True
+			i+=1
+		return permut
+			
+		
+	
+	def _correctSubstratal(self, substratal, letter):
 		for listPermut in substratal:
 			newPermutList = []
 			for iPer in listPermut:
 				newPermutList.append(iPer - 1)
-			self.__substratal.append(newPermutList)
+			if letter == 'G':
+				self.__substratalG.append(newPermutList)
+			if letter == 'R':
+				self.__substratalR.append(newPermutList)
+			if letter == 'S':
+				self.__substratalS.append(newPermutList)
 	
 
 if __name__ ==  "__main__":

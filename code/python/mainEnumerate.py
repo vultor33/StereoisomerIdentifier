@@ -8,7 +8,11 @@ chelateFirst = []
 stereoRemoved = []
 rcw = []
 
-obj1 = Enumeration(allRotations,substratalScaffoldTemp)
+obj1 = Enumeration()
+obj1.readRotations(41)
+obj1.readScaffold(41)
+exit()
+obj1.setSubstratal(substratalScaffoldTemp)
 del allRotations
 del substratalScaffoldTemp
 
