@@ -30,6 +30,9 @@ class FormulaHandling:
 	def getFormula(self):
 		return self.__finalFormula
 		
+	def getReferenceLine(self):
+		return self.__referenceLineVector
+	
 	def getCanonChelation(self):
 		return self.__canonChelation
 
