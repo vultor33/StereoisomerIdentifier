@@ -2,6 +2,7 @@ from Enumeration import Enumeration
 from FormulaHandling import FormulaHandling
 from collections import Counter
 import itertools
+import math
 
 objF = FormulaHandling()
 		
@@ -27,21 +28,42 @@ for perm in allPerm:
 # nao permitir que os quelados fiquem encavalados dois atomos apontando para o mesmo cara.
 # 3 com problema - resolver
 
-print(allFormulas)
-print(allReference)
-allBi = list(itertools.combinations([0,1,2,3], 3))
-print(allBi)
-print('testing ref')
+#print(allFormulas)
+#print(allReference)
+#print(allBi)
+#allBi = list(itertools.combinations([2,3,4], 2))
+#allBi = list(itertools.combinations_with_replacement([2,3,4,5,6,7], 3))
+#print(allBi)
+		
+#print(objP.calculateAllChelateCombinations(8))
+#print(objP.calculateAllChelatesReaches(4, 4))
+#exit()
+
+objA = FormulaHandling()
+n = 4
+allChelComb = objA.calculateAllChelateCombinations(n)
+allFormulas = []
+
 for ref in allReference:
-	for bi in allBi:
-		objP = FormulaHandling()
-		objP.generateMolecularFormula(ref, [bi])
-		objP.printInfo()
-		print(objP.getFormula())
+	for chelCom in allChelComb:
+		chelList = []
+		for chelComI in chelCom:
+			chelList.append(objA.calculateAllChelatesReaches(n, chelComI))
+		allChelationsToFormulas = list(itertools.product(*chelList))
+		for chelations in allChelationsToFormulas:
+			try:
+				objC = FormulaHandling()
+				objC.generateMolecularFormula(ref, chelations)
+				if not objC.getFormula() in allFormulas:
+					allFormulas.append(objC.getFormula())
 
+			except Exception as e:
+				if str(e) == "chelations not well defined":
+					print(end='')
+				else:
+					print(" Error:  ",str(e))
 
-#depois aplica os bidentados nas formulas daqui
-
+print(allFormulas)
 
 exit()
 

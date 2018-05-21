@@ -1,4 +1,7 @@
 from collections import Counter
+import itertools
+import math
+
 
 alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','e','s','t','u','v','x','w','y','z'] # gerar alfabeto com o python
 
@@ -37,6 +40,9 @@ class FormulaHandling:
 		return self.__canonChelation
 
 	def generateMolecularFormula(self, rank, chelations):	
+		if self._chelationsConflict(chelations):
+			raise Exception('chelations not well defined')
+	
 		for chel in chelations:
 			lisRankChel = []
 			for iChel in chel:
@@ -50,18 +56,21 @@ class FormulaHandling:
 				self.__dictChelations[lisRankChel[0]] = lisRankChel
 				self.__dictNumbers[lisRankChel[0]] = 1
 
-		allChelValues = []
-		for chelList in self.__dictChelations.values():
-			allChelValues += chelList
+		allChelPositios = []
+		for chelList in chelations:
+			for chelI in chelList:
+				allChelPositios += [chelI]
 	
-		for iRank in rank:
-			if iRank in allChelValues:
+		for iAux in range(len(rank)):
+			if iAux in allChelPositios:
 				continue
-			if iRank in self.__dictChelations:
-				self.__dictNumbers[iRank] += 1
+			if rank[iAux] in self.__dictChelations:
+				if self.__dictChelations[rank[iAux]] != [rank[iAux]]:
+					raise Exception('chelations not well defined')
+				self.__dictNumbers[rank[iAux]] += 1
 			else:
-				self.__dictChelations[iRank] = [iRank]
-				self.__dictNumbers[iRank] = 1
+				self.__dictChelations[rank[iAux]] = [rank[iAux]]
+				self.__dictNumbers[rank[iAux]] = 1
 
 		for key in self.__dictChelations:
 			self.__dictFormulas[key] = self._calculateFormula(self.__dictChelations[key])
@@ -139,7 +148,49 @@ class FormulaHandling:
 			k += tempK + 1
 			i+=1
 
-	
+
+	def calculateAllChelateCombinations(self,size):
+		allChelComb = []
+		chelPossible = []
+		i = 0
+		while i < size - 1:
+			chelPossible.append(i + 2)
+			i+=1
+		chelNumber = 1 
+		while chelNumber <= int(math.floor(size/2)):
+			allChel = list(itertools.combinations_with_replacement(chelPossible, chelNumber))
+			for chelI in allChel:
+				sum = 0
+				for iSum in chelI:
+					sum += iSum
+				if sum <= size:
+					allChelComb.append(chelI)
+			chelNumber += 1
+		return allChelComb
+
+	def calculateAllChelatesReaches(self,size, chelSize):
+		chelReach = []
+		i = 0
+		while i < size:
+			chelReach.append(i)
+			i+=1
+		return list(itertools.combinations(chelReach, chelSize))
+		
+	def _chelationsConflict(self, chelations):
+		i = 0
+		j = 0
+		while i < len(chelations) - 1:
+			j = i + 1
+			while j < len(chelations):
+				for chelI in chelations[i]:
+					for chelJ in chelations[j]:
+						if chelI == chelJ:
+							return True
+				j+=1
+			i+=1
+		
+		return False
+
 
 	def _dictFindKeyByValue(self, dict, search_value):
 		for key, value in dict.items():
