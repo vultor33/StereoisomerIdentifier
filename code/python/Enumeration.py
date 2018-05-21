@@ -156,6 +156,13 @@ class Enumeration:
 				chiralsRemoved.append(iCompare[1])
 				chiralsRemoved.append(iCompare[1])
 
+		#no stereo estao os S que foram removidos
+		#no achiral estao os R que foram removidos e que sao achirais
+		#a lista dos chirais removem o R e o S
+		print(stereoRemoved)
+		print(achiralsRemoved)
+		print(chiralsRemoved)
+
 		stereoRemoved += achiralsRemoved + chiralsRemoved
 
 

@@ -19,4 +19,5 @@ for i in range(len(allFormList)):
 	else:
 		obj1.makeEnumeration(allFormList[i][1], allFormList[i][2], rcw, stereoRemoved)
 	
-	print(len(stereoRemoved))
+	print(allFormList[i][0], '   remov:  ',len(stereoRemoved))
+	print(rcw)
