@@ -1,3 +1,6 @@
+import itertools
+
+
 
 class Enumeration:
 	"""Class to enumerate stereoisomers"""
@@ -7,6 +10,9 @@ class Enumeration:
 		self.__substratalG = []
 		self.__substratalR = []
 		self.__substratalS = []
+		self.__geoFileName = {}
+		self._defineGeoFileName()
+		
 
 	def setRotations(self, allRotations):
 		self.__allRot = allRotations
@@ -25,7 +31,7 @@ class Enumeration:
 			self.__allRot.append(rotI)
 			
 	def readScaffold(self, geoCode):
-		fileName = 'Stereoisomerlist//CN4//SP-4//SP-4-Mabcd.csv'  # LEEEEEEEEEEEEEEEEEEEEERRRR A PARTIR DO GEO CODE
+		fileName = self.__geoFileName[geoCode]
 		scaInput = open(fileName,"r")
 		scaFileStream = scaInput.read().splitlines()
 		i = 2
@@ -68,17 +74,92 @@ class Enumeration:
 				if j in stereoRemoved:
 					j += 1
 					continue
-				#print(i, ' - ', j)
 				if self._compareWithRotation(#inside compare:
 				self._painting(colorFirst,self.__substratalG[i]),
 				self._chelateRepositon(chelateFirst,self.__substratalG[i]),
 				self._painting(colorFirst,self.__substratalG[j]),
 				self._chelateRepositon(chelateFirst,self.__substratalG[j])):
-					#print('removed: ', j)
 					rcw.append(i)
 					stereoRemoved.append(j)
 				j+=1
 			i+=1
+
+
+		chirals = []
+		achirals = []
+		
+		i = 0
+		while i < len(self.__substratalR):
+			if self._compareWithRotation(
+			self._painting(colorFirst,self.__substratalR[i]),
+			self._chelateRepositon(chelateFirst,self.__substratalR[i]),
+			self._painting(colorFirst,self.__substratalS[i]),
+			self._chelateRepositon(chelateFirst,self.__substratalS[i])):
+				rcw.append(i)
+				achirals.append(i)
+				stereoRemoved.append(i)
+			else:
+				chirals.append(i)
+			i+=1
+		
+		compAchirals = [achirals]
+		compAchirals.append(achirals)
+		compChirals = [chirals]
+		compChirals.append(chirals)
+
+		listCompareAchirals = list(itertools.product(*compAchirals))
+		listCompareChirals = list(itertools.product(*compChirals))
+		del compAchirals
+		del compChirals
+		
+		achiralsRemoved = []
+		for iCompare in listCompareAchirals:
+			if iCompare[0] >= iCompare[1]:
+				continue
+			
+			if iCompare[1] in achiralsRemoved:
+				continue
+
+			if self._compareWithRotation(
+			self._painting(colorFirst,self.__substratalR[iCompare[0]]),
+			self._chelateRepositon(chelateFirst,self.__substratalR[iCompare[0]]),
+			self._painting(colorFirst,self.__substratalR[iCompare[1]]),
+			self._chelateRepositon(chelateFirst,self.__substratalR[iCompare[1]])):
+				rcw.append(iCompare[0])
+				achiralsRemoved.append(iCompare[1])
+
+		chiralsRemoved = []
+		for iCompare in listCompareChirals:
+			if iCompare[0] >= iCompare[1]:
+				continue
+			
+			if iCompare[1] in chiralsRemoved:
+				continue
+			
+			if self._compareWithRotation(
+			self._painting(colorFirst,self.__substratalR[iCompare[0]]),
+			self._chelateRepositon(chelateFirst,self.__substratalR[iCompare[0]]),
+			self._painting(colorFirst,self.__substratalR[iCompare[1]]),
+			self._chelateRepositon(chelateFirst,self.__substratalR[iCompare[1]])):
+				rcw.append(iCompare[0])
+				rcw.append(iCompare[0])
+				chiralsRemoved.append(iCompare[1])
+				chiralsRemoved.append(iCompare[1])
+
+			if self._compareWithRotation(
+			self._painting(colorFirst,self.__substratalR[iCompare[0]]),
+			self._chelateRepositon(chelateFirst,self.__substratalR[iCompare[0]]),
+			self._painting(colorFirst,self.__substratalS[iCompare[1]]),
+			self._chelateRepositon(chelateFirst,self.__substratalS[iCompare[1]])):
+				rcw.append(iCompare[0])
+				rcw.append(iCompare[0])
+				chiralsRemoved.append(iCompare[1])
+				chiralsRemoved.append(iCompare[1])
+
+		stereoRemoved += achiralsRemoved + chiralsRemoved
+
+
+
 		
 
 	def printInfo(self):
@@ -176,6 +257,39 @@ class Enumeration:
 			if letter == 'S':
 				self.__substratalS.append(newPermutList)
 	
+	def _defineGeoFileName(self):
+	
+		self.__geoFileName[40] = 'Stereoisomerlist//CN4//T-4//T-4-Mabcd.csv'	
+		self.__geoFileName[41] = 'Stereoisomerlist//CN4//SP-4//SP-4-Mabcd.csv'	
+		self.__geoFileName[42] = 'Stereoisomerlist//CN4//SS-4//SS-4-Mabcd.csv'	
+		self.__geoFileName[43] = 'Stereoisomerlist//CN4//vTBPY-4//vTBPY-4-Mabcd.csv'	
+
+		self.__geoFileName[50] = 'Stereoisomerlist//CN5//TBPY-5//TBPY-5-Mabcde.csv'	
+		self.__geoFileName[51] = 'Stereoisomerlist//CN5//SPY-5//SPY-5-Mabcde.csv'	
+		self.__geoFileName[53] = 'Stereoisomerlist//CN5//PP-5//PP-5-Mabcde.csv'	
+
+		self.__geoFileName[60] = 'Stereoisomerlist//CN6//OC-6//OC-6-Mabcdef.csv'	
+		self.__geoFileName[61] = 'Stereoisomerlist//CN6//TPR-6//TPR-6-Mabcdef.csv'	
+		self.__geoFileName[62] = 'Stereoisomerlist//CN6//HP-6//HP-6-Mabcdef.csv'	
+		self.__geoFileName[63] = 'Stereoisomerlist//CN6//PPY-6//PPY-6-Mabcdef.csv'	
+		
+		self.__geoFileName[70] = 'Stereoisomerlist//CN7//COC-7//COC-7-Mabcdefg.csv'	
+		self.__geoFileName[71] = 'Stereoisomerlist//CN7//PBPY-7//PBPY-7-Mabcdefg.csv'	
+		self.__geoFileName[72] = 'Stereoisomerlist//CN7//CTPR-7//CTPR-7-Mabcdefg.csv'	
+		self.__geoFileName[73] = 'Stereoisomerlist//CN7//HPY-7//HPY-7-Mabcdefg.csv'	
+		self.__geoFileName[74] = 'Stereoisomerlist//CN7//HP-7//HP-7-Mabcdefg.csv'	
+
+		self.__geoFileName[80] = 'Stereoisomerlist//CN8//SAPR-8//SAPR-8-Mabcdefgh.csv'	
+		self.__geoFileName[81] = 'Stereoisomerlist//CN8//TDD-8//TDD-8-Mabcdefgh.csv'	
+		self.__geoFileName[82] = 'Stereoisomerlist//CN8//BTPR-8//BTPR-8-Mabcdefgh.csv'	
+		self.__geoFileName[83] = 'Stereoisomerlist//CN8//HBPY-8//HBPY-8-Mabcdefgh.csv'	
+		self.__geoFileName[84] = 'Stereoisomerlist//CN8//CU-8//CU-8-Mabcdefgh.csv'	
+		self.__geoFileName[85] = 'Stereoisomerlist//CN8//ETBPY-8//ETBPY-8-Mabcdefgh.csv'	
+		self.__geoFileName[86] = 'Stereoisomerlist//CN8//HPY-8//HPY-8-Mabcdefgh.csv'	
+		self.__geoFileName[87] = 'Stereoisomerlist//CN8//OP-8//OP-8-Mabcdefgh.csv'	
+	
+	
+
 
 if __name__ ==  "__main__":
 	print("Module to enumerate stereoisomers")
