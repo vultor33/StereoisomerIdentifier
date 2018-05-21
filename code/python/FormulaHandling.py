@@ -10,6 +10,10 @@ justLetters = lambda enterString : ''.join([i for i in enterString if i.isalpha(
 
 class GenerateAllFormulas:
 	"""Class to enumerate all formulas with all possible chelations"""
+	# How to use
+	#objG = GenerateAllFormulas()
+	#objG.generateAllFormulas(8)
+	#objG.printFile()
 
 	def __init__(self):
 		self.__allFormulas = []
@@ -34,6 +38,7 @@ class GenerateAllFormulas:
 				for chelComI in chelCom:
 					chelReach = list(range(0,size))
 					chelList.append(list(itertools.combinations(chelReach, chelComI)))
+
 				allChelationsToFormulas = list(itertools.product(*chelList))
 				for chelations in allChelationsToFormulas:
 					try:
@@ -42,7 +47,7 @@ class GenerateAllFormulas:
 						if not objC.getFormula() in self.__allFormulas:
 							self.__allFormulas.append(objC.getFormula())
 							self.__allReferences.append(objC.getReferenceLine())
-							self.__allChelations.append(chelations)
+							self.__allChelations.append(objC.getCanonChelation())
 		
 					except Exception as e:
 						if str(e) == "chelations not well defined":
@@ -52,12 +57,13 @@ class GenerateAllFormulas:
 
 
 	def printFile(self):
-		allFormFile = open("allFormulas.txt", "w")
+		allFormFile = open("allFormulas.py", "w")
+		allFormFile.write("allFormList = []\n")
 		for i in range(len(self.__allFormulas)):
-			allFormFile.write("{:50}  {:50}  {:300}\n".format(
-			str(self.__allFormulas[i]),
-			str(self.__allReferences[i]),
-			str(self.__allChelations[i])))
+			allFormFile.write("allFormList.append([\'{}\',{},{}])\n".format(
+			self.__allFormulas[i],
+			self.__allReferences[i],
+			self.__allChelations[i]))
 			
 		allFormFile.close()			
 

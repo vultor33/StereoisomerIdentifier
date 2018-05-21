@@ -4,13 +4,31 @@ from FormulaHandling import GenerateAllFormulas
 from collections import Counter
 import itertools
 import math
+import csv
+import json
+from DataAllFormulas import allFormList4
 
+for form in allFormList8:
+	print(form)
 
-objG = GenerateAllFormulas()
+exit()
 
-objG.generateAllFormulas(4)
+with open('allFormulas.csv', 'r') as csvfile:
+	spamreader = csv.reader(csvfile, delimiter=';', quotechar='|')
+	for row in spamreader:
+		#print(row)
+		saveList = []
+		for elem in row[1]:
+			if elem.isdigit():
+				saveList.append(int(float(elem)))
+		#print(saveList)
+		lista2 = json.load(row[2])
+		print(lista2)
+		#print('lista:  ',row[1])
+		#print (', '.join(row))
 
-objG.printFile()
+exit()
+
 
 exit()
 
