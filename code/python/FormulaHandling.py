@@ -7,6 +7,77 @@ alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q',
 
 justLetters = lambda enterString : ''.join([i for i in enterString if i.isalpha()])
 
+
+class GenerateAllFormulas:
+	"""Class to enumerate all formulas with all possible chelations"""
+
+	def __init__(self):
+		self.__allFormulas = []
+		self.__allReferences = []
+		self.__allChelations = []
+
+	def generateAllFormulas(self, size):
+		allComb = list(itertools.combinations_with_replacement(list(range(0,size)), size))
+		for perm in allComb: # monodentates
+			objP = FormulaHandling()
+			objP.generateMolecularFormula(perm, [])
+			if not objP.getFormula() in self.__allFormulas:
+				self.__allFormulas.append(objP.getFormula())
+				self.__allReferences.append(objP.getReferenceLine())
+				self.__allChelations.append(['None'])
+				
+		allChelComb = self._calculateAllChelateCombinations(size)
+		monodentateReferences = list(self.__allReferences)
+		for ref in monodentateReferences:  #use monodentates as base to chelations definitions
+			for chelCom in allChelComb:
+				chelList = []
+				for chelComI in chelCom:
+					chelReach = list(range(0,size))
+					chelList.append(list(itertools.combinations(chelReach, chelComI)))
+				allChelationsToFormulas = list(itertools.product(*chelList))
+				for chelations in allChelationsToFormulas:
+					try:
+						objC = FormulaHandling()
+						objC.generateMolecularFormula(ref, chelations)
+						if not objC.getFormula() in self.__allFormulas:
+							self.__allFormulas.append(objC.getFormula())
+							self.__allReferences.append(objC.getReferenceLine())
+							self.__allChelations.append(chelations)
+		
+					except Exception as e:
+						if str(e) == "chelations not well defined":
+							pass
+						else:
+							print(" Error:  ",str(e))
+
+
+	def printFile(self):
+		allFormFile = open("allFormulas.txt", "w")
+		for i in range(len(self.__allFormulas)):
+			allFormFile.write("{:50}  {:50}  {:300}\n".format(
+			str(self.__allFormulas[i]),
+			str(self.__allReferences[i]),
+			str(self.__allChelations[i])))
+			
+		allFormFile.close()			
+
+	def _calculateAllChelateCombinations(self,size):
+		allChelComb = []
+		chelNumber = 1 
+		while chelNumber <= int(math.floor(size/2)):
+			allChel = list(itertools.combinations_with_replacement(list(range(2,size + 1)), chelNumber))
+			for chelI in allChel:
+				sum = 0
+				for iSum in chelI:
+					sum += iSum
+				if sum <= size:
+					allChelComb.append(chelI)
+			chelNumber += 1
+		return allChelComb
+
+
+
+
 class FormulaHandling:
 	"""Class to generate and transform molecular formulas"""
 	
@@ -151,11 +222,7 @@ class FormulaHandling:
 
 	def calculateAllChelateCombinations(self,size):
 		allChelComb = []
-		chelPossible = []
-		i = 0
-		while i < size - 1:
-			chelPossible.append(i + 2)
-			i+=1
+		chelPossible = list(range(2,size + 1))
 		chelNumber = 1 
 		while chelNumber <= int(math.floor(size/2)):
 			allChel = list(itertools.combinations_with_replacement(chelPossible, chelNumber))
@@ -168,12 +235,8 @@ class FormulaHandling:
 			chelNumber += 1
 		return allChelComb
 
-	def calculateAllChelatesReaches(self,size, chelSize):
-		chelReach = []
-		i = 0
-		while i < size:
-			chelReach.append(i)
-			i+=1
+	def calculateAllChelatesReaches(self, size, chelSize):
+		chelReach = list(range(0,size))
 		return list(itertools.combinations(chelReach, chelSize))
 		
 	def _chelationsConflict(self, chelations):
