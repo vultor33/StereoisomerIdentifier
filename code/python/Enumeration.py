@@ -1,4 +1,5 @@
 import itertools
+from collections import Counter
 
 
 
@@ -63,31 +64,47 @@ class Enumeration:
 		self._correctSubstratal(substratalS, 'S')
 	
 
-	def makeEnumeration(self, colorFirst, chelateFirst, rcw, stereoRemoved): # REFAZEEER
-		i = 0
-		while i < len(self.__substratalG) - 1:
-			j = i + 1
-			if i in stereoRemoved:
-				i += 1
-				continue
-			while j < len(self.__substratalG):
-				if j in stereoRemoved:
-					j += 1
+	def makeEnumeration(self, colorFirst, chelateFirst):
+
+
+		# direct counting
+		if len(self.__substratalG) != 0:
+			i = 0
+			stereoRemoved = []
+			rcwStereo = []
+			while i < len(self.__substratalG) - 1:
+				j = i + 1
+				if i in stereoRemoved:
+					i += 1
 					continue
-				if self._compareWithRotation(#inside compare:
-				self._painting(colorFirst,self.__substratalG[i]),
-				self._chelateRepositon(chelateFirst,self.__substratalG[i]),
-				self._painting(colorFirst,self.__substratalG[j]),
-				self._chelateRepositon(chelateFirst,self.__substratalG[j])):
-					rcw.append(i)
-					stereoRemoved.append(j)
-				j+=1
-			i+=1
+				while j < len(self.__substratalG):
+					if j in stereoRemoved:
+						j += 1
+						continue
+					if self._compareWithRotation(#inside compare:
+					self._painting(colorFirst,self.__substratalG[i]),
+					self._chelateRepositon(chelateFirst,self.__substratalG[i]),
+					self._painting(colorFirst,self.__substratalG[j]),
+					self._chelateRepositon(chelateFirst,self.__substratalG[j])):
+						rcwStereo.append(i)
+						stereoRemoved.append(j)
+					j+=1
+				i+=1
 
+			stereos = list(range(len(self.__substratalG)))
+			for remStereo in stereoRemoved:
+				stereos.remove(remStereo)
+			del stereoRemoved
+			rcwStereoCounter = Counter(rcwStereo)
+			del rcwStereo
+			print('stereoisomers:  ',stereos)
+			print('rcw counter:  ',rcwStereoCounter) #rcw = counter + 1
+			return
+		
 
+		# R AND S ISOMERS
 		chirals = []
 		achirals = []
-		
 		i = 0
 		while i < len(self.__substratalR):
 			if self._compareWithRotation(
@@ -95,29 +112,22 @@ class Enumeration:
 			self._chelateRepositon(chelateFirst,self.__substratalR[i]),
 			self._painting(colorFirst,self.__substratalS[i]),
 			self._chelateRepositon(chelateFirst,self.__substratalS[i])):
-				rcw.append(i)
 				achirals.append(i)
-				stereoRemoved.append(i)
 			else:
 				chirals.append(i)
 			i+=1
 		
 		compAchirals = [achirals]
 		compAchirals.append(achirals)
-		compChirals = [chirals]
-		compChirals.append(chirals)
-
 		listCompareAchirals = list(itertools.product(*compAchirals))
-		listCompareChirals = list(itertools.product(*compChirals))
 		del compAchirals
-		del compChirals
-		
 		achiralsRemoved = []
+		rcwAchiral = []
 		for iCompare in listCompareAchirals:
 			if iCompare[0] >= iCompare[1]:
 				continue
 			
-			if iCompare[1] in achiralsRemoved:
+			if any(elem in iCompare for elem in achiralsRemoved):
 				continue
 
 			if self._compareWithRotation(
@@ -125,15 +135,29 @@ class Enumeration:
 			self._chelateRepositon(chelateFirst,self.__substratalR[iCompare[0]]),
 			self._painting(colorFirst,self.__substratalR[iCompare[1]]),
 			self._chelateRepositon(chelateFirst,self.__substratalR[iCompare[1]])):
-				rcw.append(iCompare[0])
+				rcwAchiral.append(iCompare[0])
 				achiralsRemoved.append(iCompare[1])
 
+		del listCompareAchirals
+		for remAchiral in achiralsRemoved:
+			achirals.remove(remAchiral)
+		del achiralsRemoved
+		rcwAchiralCounter = Counter(rcwAchiral)
+		del rcwAchiral
+		print('achirals:  ',achirals)
+		print('rcw counter:  ',rcwAchiralCounter) #rcw = 2*counter + 2  - se nao tem rcw = 2 (apaga seu gemeo)
+
+		compChirals = [chirals]
+		compChirals.append(chirals)
+		listCompareChirals = list(itertools.product(*compChirals))
+		del compChirals
 		chiralsRemoved = []
+		rcwChiral = []
 		for iCompare in listCompareChirals:
 			if iCompare[0] >= iCompare[1]:
 				continue
 			
-			if iCompare[1] in chiralsRemoved:
+			if any(elem in iCompare for elem in chiralsRemoved):
 				continue
 			
 			if self._compareWithRotation(
@@ -141,9 +165,7 @@ class Enumeration:
 			self._chelateRepositon(chelateFirst,self.__substratalR[iCompare[0]]),
 			self._painting(colorFirst,self.__substratalR[iCompare[1]]),
 			self._chelateRepositon(chelateFirst,self.__substratalR[iCompare[1]])):
-				rcw.append(iCompare[0])
-				rcw.append(iCompare[0])
-				chiralsRemoved.append(iCompare[1])
+				rcwChiral.append(iCompare[0])
 				chiralsRemoved.append(iCompare[1])
 
 			if self._compareWithRotation(
@@ -151,19 +173,17 @@ class Enumeration:
 			self._chelateRepositon(chelateFirst,self.__substratalR[iCompare[0]]),
 			self._painting(colorFirst,self.__substratalS[iCompare[1]]),
 			self._chelateRepositon(chelateFirst,self.__substratalS[iCompare[1]])):
-				rcw.append(iCompare[0])
-				rcw.append(iCompare[0])
-				chiralsRemoved.append(iCompare[1])
+				rcwChiral.append(iCompare[0])
 				chiralsRemoved.append(iCompare[1])
 
-		#no stereo estao os S que foram removidos
-		#no achiral estao os R que foram removidos e que sao achirais
-		#a lista dos chirais removem o R e o S
-		print(stereoRemoved)
-		print(achiralsRemoved)
-		print(chiralsRemoved)
-
-		stereoRemoved += achiralsRemoved + chiralsRemoved
+		del listCompareChirals
+		for remChiral in chiralsRemoved:
+			chirals.remove(remChiral)
+		del chiralsRemoved
+		rcwChiralCounter = Counter(rcwChiral)
+		del rcwChiral
+		print('chirals:  ',chirals)
+		print('rcw counter:  ',rcwChiralCounter) # rcw do R e counter+1 e do S e counter+1 - se nao tem rcw = 1
 
 
 
