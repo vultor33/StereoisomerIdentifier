@@ -6,14 +6,18 @@ from collections import Counter
 class Enumeration:
 	"""Class to enumerate stereoisomers"""
 
-	def __init__(self):
+	def __init__(self, geoCode):
 		self.__allRot = []
 		self.__substratalG = []
 		self.__substratalR = []
 		self.__substratalS = []
 		self.__geoFileName = {}
+		self.__geoCodeString = {}
 		self._defineGeoFileName()
-		
+		self.__geoCode = geoCode
+
+		self._readRotations()
+		self._readScaffold()
 
 	def setRotations(self, allRotations):
 		self.__allRot = allRotations
@@ -21,8 +25,8 @@ class Enumeration:
 	def setSubstratal(self, substratal, letter):
 		self._correctSubstratal(substratal,letter)
 
-	def readRotations(self, geoCode):
-		fileName = "rotations//rotations-" + str(geoCode) + ".txt"
+	def _readRotations(self):
+		fileName = "rotations//rotations-" + str(self.__geoCode) + ".txt"
 		rotInput = open(fileName,"r")
 		rotFileStream = rotInput.read().splitlines()
 		for line in rotFileStream:
@@ -31,8 +35,8 @@ class Enumeration:
 				rotI.append(int(float(iNum)))
 			self.__allRot.append(rotI)
 			
-	def readScaffold(self, geoCode):
-		fileName = self.__geoFileName[geoCode]
+	def _readScaffold(self):
+		fileName = self.__geoFileName[self.__geoCode]
 		scaInput = open(fileName,"r")
 		scaFileStream = scaInput.read().splitlines()
 		i = 2
@@ -64,8 +68,21 @@ class Enumeration:
 		self._correctSubstratal(substratalS, 'S')
 	
 
-	def makeEnumeration(self, colorFirst, chelateFirst):
+	def makeEnumeration(self, formula, colorFirst, chelateFirst):
 
+		enumOut = open(self.__geoCodeString[self.__geoCode] + '-' + formula + ".csv", "w")
+		referenceLine = self.__geoCodeString[self.__geoCode] + '  '
+		referenceLine += formula + '  NC: ' + str(len(colorFirst)) + '   types: '
+		for color in colorFirst:
+			referenceLine += str(color) + ' '
+		referenceLine += '  chelates: ' + str(len(chelateFirst)) + ' '
+		for chel in chelateFirst:
+			referenceLine += 'cI-length: ' + str(len(chel)) + ' cI: '
+			for chelI in chel:
+				referenceLine += str(chelI) + ' '
+		enumOut.write("{}\nG\n".format(referenceLine))
+
+		
 
 		# direct counting
 		if len(self.__substratalG) != 0:
@@ -97,8 +114,21 @@ class Enumeration:
 			del stereoRemoved
 			rcwStereoCounter = Counter(rcwStereo)
 			del rcwStereo
-			print('stereoisomers:  ',stereos)
-			print('rcw counter:  ',rcwStereoCounter) #rcw = counter + 1
+			
+			#PRINTING
+			i = 0
+			while i < len(self.__substratalG):
+				if i in stereos:
+					for isoI in self.__substratalG[i]:
+						enumOut.write("{} ".format(str(isoI)))
+					if i in rcwStereoCounter:
+						enumOut.write(";{}\n".format(
+						str(rcwStereoCounter[i] + 1)))
+					else:
+						enumOut.write(";1\n")
+				i+=1
+			enumOut.write("R\nS\n")			
+			enumOut.close()
 			return
 		
 
@@ -144,8 +174,21 @@ class Enumeration:
 		del achiralsRemoved
 		rcwAchiralCounter = Counter(rcwAchiral)
 		del rcwAchiral
-		print('achirals:  ',achirals)
-		print('rcw counter:  ',rcwAchiralCounter) #rcw = 2*counter + 2  - se nao tem rcw = 2 (apaga seu gemeo)
+
+		#PRINTING
+		i = 0
+		while i < len(self.__substratalR):
+			if i in achirals:
+				for isoI in self.__substratalR[i]:
+					enumOut.write("{} ".format(str(isoI)))
+				if i in rcwAchiralCounter:
+					enumOut.write(";{}\n".format(
+					str(2*rcwAchiralCounter[i] + 2)))
+				else:
+					enumOut.write(";2\n")
+			i+=1
+		del achirals
+		del rcwAchiralCounter
 
 		compChirals = [chirals]
 		compChirals.append(chirals)
@@ -182,8 +225,34 @@ class Enumeration:
 		del chiralsRemoved
 		rcwChiralCounter = Counter(rcwChiral)
 		del rcwChiral
-		print('chirals:  ',chirals)
-		print('rcw counter:  ',rcwChiralCounter) # rcw do R e counter+1 e do S e counter+1 - se nao tem rcw = 1
+
+		#PRINTING
+		enumOut.write("R\n")
+		i = 0
+		while i < len(self.__substratalR):
+			if i in chirals:
+				for isoI in self.__substratalR[i]:
+					enumOut.write("{} ".format(str(isoI)))
+				if i in rcwChiralCounter:
+					enumOut.write(";{}\n".format(
+					str(rcwChiralCounter[i] + 1)))
+				else:
+					enumOut.write(";1\n")
+			i+=1
+		enumOut.write("S\n")
+		i = 0
+		while i < len(self.__substratalS):
+			if i in chirals:
+				for isoI in self.__substratalS[i]:
+					enumOut.write("{} ".format(str(isoI)))
+				if i in rcwChiralCounter:
+					enumOut.write(";{}\n".format(
+					str(rcwChiralCounter[i] + 1)))
+				else:
+					enumOut.write(";1\n")
+			i+=1
+
+		enumOut.close()
 
 
 
@@ -313,7 +382,37 @@ class Enumeration:
 		self.__geoFileName[84] = 'Stereoisomerlist//CN8//CU-8//CU-8-Mabcdefgh.csv'	
 		self.__geoFileName[85] = 'Stereoisomerlist//CN8//ETBPY-8//ETBPY-8-Mabcdefgh.csv'	
 		self.__geoFileName[86] = 'Stereoisomerlist//CN8//HPY-8//HPY-8-Mabcdefgh.csv'	
-		self.__geoFileName[87] = 'Stereoisomerlist//CN8//OP-8//OP-8-Mabcdefgh.csv'	
+		self.__geoFileName[87] = 'Stereoisomerlist//CN8//OP-8//OP-8-Mabcdefgh.csv'
+		
+		self.__geoCodeString[40] = 'T-4'	
+		self.__geoCodeString[41] = 'SP-4'	
+		self.__geoCodeString[42] = 'SS-4'	
+		self.__geoCodeString[43] = 'vTBPY-4'	
+
+		self.__geoCodeString[50] = 'TBPY-5'	
+		self.__geoCodeString[51] = 'SPY-5'	
+		self.__geoCodeString[53] = 'PP-5'	
+
+		self.__geoCodeString[60] = 'OC-6'	
+		self.__geoCodeString[61] = 'TPR-6'	
+		self.__geoCodeString[62] = 'HP-6'	
+		self.__geoCodeString[63] = 'PPY-6'	
+		
+		self.__geoCodeString[70] = 'COC-7'	
+		self.__geoCodeString[71] = 'PBPY-7'	
+		self.__geoCodeString[72] = 'CTPR-7'	
+		self.__geoCodeString[73] = 'HPY-7'	
+		self.__geoCodeString[74] = 'HP-7'	
+
+		self.__geoCodeString[80] = 'SAPR-8'	
+		self.__geoCodeString[81] = 'TDD-8'	
+		self.__geoCodeString[82] = 'BTPR-8'	
+		self.__geoCodeString[83] = 'HBPY-8'	
+		self.__geoCodeString[84] = 'CU-8'	
+		self.__geoCodeString[85] = 'ETBPY-8'	
+		self.__geoCodeString[86] = 'HPY-8'	
+		self.__geoCodeString[87] = 'OP-8'
+		
 	
 	
 
