@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 
 #include "Geometries.h"
 #include "MarquesEnantiomers.h"
@@ -58,6 +59,75 @@ void StereoisomerIdentifier::identify(const string &fileName)
 	printMol(idealGeo, fileName + "-idealGeo.xyz");
 	printMol(coordMol, fileName + "-coordMol.xyz");
 
+}
+
+void StereoisomerIdentifier::generateAllMol()
+{
+	ReadWriteFormats rwf_;
+	ifstream file_("OC-6-a2(A2)(AB).csv");
+	vector<int> atomTypes;
+	vector< vector<int> > chel;
+	rwf_.readAtomTypesAndChelates(file_, atomTypes, chel);
+
+	Geometries geo_;
+	vector<CoordXYZ> idealGeo;
+	double dummy;
+	vector<int> reflecDummy;
+	geo_.selectGeometry(
+		60,
+		idealGeo,
+		dummy,
+		reflecDummy);
+
+	string line;
+	getline(file_, line);
+	string letterType = line;
+	int iLetterCount = 0;
+	while (getline(file_, line))
+	{
+		if ((line == "R") || (line == "S"))
+		{
+			letterType = line;
+			iLetterCount = 0;
+			continue;
+		}
+		iLetterCount++;
+
+		stringstream convertLine;
+		convertLine << line;
+		vector<int> permutation(atomTypes.size());
+		for (size_t i = 0; i < atomTypes.size(); i++)
+			convertLine >> permutation[i];
+
+		//rotate bidentates
+
+		for (size_t k = 0; k < idealGeo.size(); k++)
+		{
+			idealGeo[k].atomlabel = setLabel(atomTypes[permutation[k]]);
+			cout << permutation[k] << "  ";
+		}
+		cout << endl;
+		for (size_t i = 0; i < idealGeo.size(); i++)
+			cout << atomTypes[permutation[i]] << "  ";
+		cout << endl;
+		vector< vector<int> > chelPermuted = chel;
+		for (size_t i = 0; i < chelPermuted.size(); i++)
+		{
+			for (size_t j = 0; j < chelPermuted.size(); j++)
+			{
+				chelPermuted[i][j] = findIndexByValue(permutation, chelPermuted[i][j]);
+				cout << chelPermuted[i][j] << "  ";
+			}
+			cout << "xxx";
+		}
+		cout << endl;
+
+
+
+
+		printMol(idealGeo, "teste.xyz");
+
+	}
 }
 
 string StereoisomerIdentifier::setLabel(int i)
@@ -157,6 +227,7 @@ std::vector<CoordXYZ> StereoisomerIdentifier::readInput(
 	reescaleMetalLigandDistancesToOne(coordMol);
 	return coordMol;
 }
+
 
 std::vector<CoordXYZ> StereoisomerIdentifier::findShape(
 	const std::vector<CoordXYZ> &coordMol,
@@ -445,4 +516,17 @@ std::vector<std::string> StereoisomerIdentifier::findCountingLine(int coordinati
 		}
 	}
 	return numbersLine;
+}
+
+int StereoisomerIdentifier::findIndexByValue(std::vector<int> & vec, int value)
+{
+	vector<int>::iterator it = find(vec.begin(), vec.end(), value);
+
+	if (it != vec.end())
+		return (int)distance(vec.begin(), it);
+	else
+	{
+		cout << "Error on:  StereoisomerIdentifier::findIndexByValue -- exiting" << endl;
+		exit(1);
+	}
 }

@@ -79,6 +79,45 @@ void ReadWriteFormats::readAtomTypesAndBidentateChosenFileWithLabels(
 	}
 }
 
+
+// python format:
+// OC-6  a2(A2)(AB)  NC: 6   types: 0 0 1 1 2 3   chelates: 2 cI-length: 2 cI: 2 3 cI-length: 2 cI: 4 5 
+void ReadWriteFormats::readAtomTypesAndChelates(
+	ifstream & file_,
+	std::vector<int> & atomTypes,
+	std::vector< std::vector<int> > & chelates)
+{
+	string line;
+	getline(file_, line);
+	stringstream convertLine;
+	convertLine << line;
+	string dum1;
+	convertLine >> dum1 >> dum1 >> dum1;
+	int nCoord;
+	convertLine >> nCoord;
+	atomTypes.resize(nCoord);
+	convertLine >> dum1;
+	for (int i = 0; i < nCoord; i++)
+		convertLine >> atomTypes[i];
+
+	convertLine >> dum1;
+	int nChel;
+	convertLine >> nChel;
+	for (int i = 0; i < nChel; i++)
+	{
+		convertLine >> dum1;
+		int sizeChelI;
+		convertLine >> sizeChelI;
+		convertLine >> dum1;
+		vector<int> chelI(sizeChelI);
+		for (int j = 0; j < sizeChelI; j++)
+			convertLine >> chelI[j];
+		chelates.push_back(chelI);
+	}
+}
+
+
+
 // {SAPR-8 [Ma2b2c2] [1 2 3 4 5 6 7 8] Aa} --> format
 vector<int> ReadWriteFormats::readCauchyNotationsEnantiomers(
 	ifstream & openendFile_,

@@ -19,6 +19,8 @@ public:
 
 	void identify(const std::string &fileName);
 
+	void generateAllMol();
+
 private:
 	std::string setLabel(int i);
 
@@ -75,7 +77,7 @@ private:
 
 	void printMol(const std::vector<CoordXYZ> &mol, const std::string &fileName);
 
-
+	int findIndexByValue(std::vector<int> & vec, int value);
 };
 
 #endif

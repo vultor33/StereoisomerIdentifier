@@ -28,6 +28,10 @@ public:
 		int systemSize,
 		int nBidentates);
 
+	void readAtomTypesAndChelates(
+		std::ifstream & file_,
+		std::vector<int> & atomTypes,
+		std::vector< std::vector<int> > & chelates);
 	/*
 	// letters / bidentares   --> format
 	void readAtomTypesAndBidentateChosenFileWithLetters(
