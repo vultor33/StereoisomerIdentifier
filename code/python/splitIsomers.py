@@ -49,4 +49,7 @@ for cn in stereoList:
 		for isoFile in allIsoFiles:
 			splitIsomerFile(isoFile)
 			
-	
+
+
+if __name__ ==  "__main__":
+	print("This module transform old format of stereoisomer into RSG format")

@@ -63,8 +63,11 @@ void StereoisomerIdentifier::identify(const string &fileName)
 
 void StereoisomerIdentifier::generateAllMol()
 {
+	remove("testeG.xyz");
+	remove("testeR.xyz");
+	remove("testeS.xyz");
 	ReadWriteFormats rwf_;
-	ifstream file_("OC-6-a2(A2)(AB).csv");
+	ifstream file_("OC-6-a3b2c.csv");
 	vector<int> atomTypes;
 	vector< vector<int> > chel;
 	rwf_.readAtomTypesAndChelates(file_, atomTypes, chel);
@@ -99,34 +102,34 @@ void StereoisomerIdentifier::generateAllMol()
 		for (size_t i = 0; i < atomTypes.size(); i++)
 			convertLine >> permutation[i];
 
-		//rotate bidentates
-
+// APAGAR O COUT DEPOIS DOS TESTES
 		for (size_t k = 0; k < idealGeo.size(); k++)
 		{
 			idealGeo[k].atomlabel = setLabel(atomTypes[permutation[k]]);
-			cout << permutation[k] << "  ";
+//			cout << permutation[k] << "  ";
 		}
-		cout << endl;
-		for (size_t i = 0; i < idealGeo.size(); i++)
-			cout << atomTypes[permutation[i]] << "  ";
-		cout << endl;
+//		cout << endl;
+//		for (size_t i = 0; i < idealGeo.size(); i++)
+//			cout << atomTypes[permutation[i]] << "  ";
+//		cout << endl;
 		vector< vector<int> > chelPermuted = chel;
 		for (size_t i = 0; i < chelPermuted.size(); i++)
 		{
-			for (size_t j = 0; j < chelPermuted.size(); j++)
+			for (size_t j = 0; j < chelPermuted[i].size(); j++)
 			{
 				chelPermuted[i][j] = findIndexByValue(permutation, chelPermuted[i][j]);
-				cout << chelPermuted[i][j] << "  ";
+//				cout << chelPermuted[i][j] << "  ";
 			}
-			cout << "xxx";
+//			cout << "xxx";
 		}
-		cout << endl;
+//		cout << endl;
 
-
-
-
-		printMol(idealGeo, "teste.xyz");
-
+		printMol(
+			idealGeo,
+			chelPermuted,
+			letterType,
+			"teste" + letterType + ".xyz");
+		
 	}
 }
 
@@ -145,17 +148,17 @@ string StereoisomerIdentifier::setLabel(int i)
 	case 4:
 		return "Na";
 	case 5:
-		return "B";
+		return "Ca";
 	case 6:
 		return "Se";
 	case 7:
 		return "C";
 	case 8:
-		return "He";
-	case 9:
-		return "Ca";
-	case 10:
 		return "Ti";
+	case 9:
+		return "He";
+	case 10:
+		return "B";
 	case 11:
 		return "Sc";
 	default:
@@ -379,6 +382,58 @@ void StereoisomerIdentifier::printMol(const std::vector<CoordXYZ> &mol)
 	}
 	out_.close();
 
+}
+
+void StereoisomerIdentifier::printMol(
+	const std::vector<CoordXYZ> &mol,
+	const std::vector< std::vector<int> > &chelates,
+	std::string letter,
+	const std::string &fileName)
+{
+	ofstream out_;
+	out_.open(fileName.c_str(), std::ofstream::out | std::ofstream::app);
+	double reescale = 2.0e0;
+	int countChel = 0;
+	for (size_t i = 0; i < chelates.size(); i++)
+		for (size_t j = 0; j < chelates[i].size() - 1; j++)
+			for (size_t k = j + 1; k < chelates[i].size(); k++)
+				countChel += 2;
+
+
+	out_ << mol.size() + countChel << endl << letter << endl;
+	for (size_t i = 0; i < mol.size(); i++)
+	{
+		out_ << mol[i].atomlabel << "  "
+			<< mol[i].x * reescale << "  "
+			<< mol[i].y * reescale << "  "
+			<< mol[i].z * reescale << endl;
+	}
+	for (size_t i = 0; i < chelates.size(); i++)
+	{
+		for (size_t j = 0; j < chelates[i].size() - 1; j++)
+		{
+			for (size_t k = j + 1; k < chelates[i].size(); k++)
+			{
+				size_t chel1 = chelates[i][j];
+				size_t chel2 = chelates[i][k];
+				CoordXYZ meanPoint;
+				meanPoint.x = reescale * (mol[chel2].x - mol[chel1].x);
+				meanPoint.y = reescale * (mol[chel2].y - mol[chel1].y);
+				meanPoint.z = reescale * (mol[chel2].z - mol[chel1].z);
+				out_ << setLabel(11-i) << "  "//FREDMUDAAAARRRRssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
+					<< reescale * mol[chel1].x + meanPoint.x * 0.25e0 << "  "
+					<< reescale * mol[chel1].y + meanPoint.y * 0.25e0 << "  "
+					<< reescale * mol[chel1].z + meanPoint.z * 0.25e0 << endl;
+				out_ << setLabel(11 - i) << "  "
+					<< reescale * mol[chel1].x + meanPoint.x * 0.75e0 << "  "
+					<< reescale * mol[chel1].y + meanPoint.y * 0.75e0 << "  "
+					<< reescale * mol[chel1].z + meanPoint.z * 0.75e0 << endl;
+			}
+		}
+	}
+
+
+	out_.close();
 }
 
 std::vector< std::string > StereoisomerIdentifier::readAllPermutations(

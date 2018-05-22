@@ -77,6 +77,12 @@ private:
 
 	void printMol(const std::vector<CoordXYZ> &mol, const std::string &fileName);
 
+	void printMol(
+		const std::vector<CoordXYZ> &mol, 
+		const std::vector< std::vector<int> > &chelates,
+		std::string title,
+		const std::string &fileName);
+
 	int findIndexByValue(std::vector<int> & vec, int value);
 };
 
