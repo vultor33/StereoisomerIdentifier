@@ -3,26 +3,26 @@ import glob
 from rdkit import Chem
 from MolFileManipulation import Mol2ToMol
 
-flagOnlyOne = False
+flagOnlyOne = True
 
 if flagOnlyOne:
 
 	print("starting")
 	try:
-		obj1 = Mol2ToMol("PEBDOP.mol2")
+		obj1 = Mol2ToMol("XARXET.mol2")
 		obj1.runStereoisomerIdentifierRmsd()
 
 	except Exception as e:
 		if str(e) == "Chem.MolFromMol2File failed":
 			print(" rdkit coldn't read mol2 file\n")
-		elif str(e) == "Metal number error":
+		elif str(e) == "Metal number error - 0 metals":
 			print(" Couldn't find any metal at .mol2 file\n")
+		elif str(e) == "Metal number error - more than one":
+			print(" More than one metal at .mol2 file\n")
 		elif str(e) == "Number of ligands error":
 			print(" Number of ligands need to be between 4 and 9\n")
 		else:
 			print(" Error:  ",str(e))
-	finally:
-		print("\n")
 	print("finished")
 	exit()
 

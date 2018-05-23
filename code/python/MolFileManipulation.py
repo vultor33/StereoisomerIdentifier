@@ -2,6 +2,7 @@ import os
 import subprocess
 from rdkit import Chem
 from collections import Counter
+from FormulaHandling import FormulaHandling
 
 #transfer to a utility functions
 
@@ -21,6 +22,7 @@ class Mol2ToMol:
 		self.__metalsInMol2File = []
 		self.__fileMol2Name = ""
 		self.__equivalenceRank = []
+		self.__chelates = []
 
 		self.__fileMol2Name, fileExtension = os.path.splitext(fileMol2Name)
 		if not fileExtension == '.mol2':
@@ -34,9 +36,15 @@ class Mol2ToMol:
 
 		#Canonicalizing
 		mol = Chem.MolFromMol2File(self.__fileMol2Name + '.mol2', removeHs = False)
-		if mol == None:
+		if mol is None:
 			raise Exception('Chem.MolFromMol2File failed')
 		self.__equivalenceRank = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
+		
+
+		#Finding chelations
+		self._findChelations()
+		
+		
 
 	def printInfo(self):
 		print("molName: ",self.__molName)
@@ -79,7 +87,7 @@ class Mol2ToMol:
 			i+=1
 			
 		if len(self.__metalsInMol2File) < 1:
-			raise Exception("Metal number error")
+			raise Exception("Metal number error - 0 metals")
 
 	def _generateMolecularFormula(self, rankL, ligandsBondedToMetal):	
 		for i in ligandsBondedToMetal:
@@ -116,6 +124,33 @@ class Mol2ToMol:
 
 
 	def _writeCppInput(self, iMetal):
+
+		ligandBondedToMetal = self._getAtomBonds(self.__metalsInMol2File[0] + 1)
+		rankl = []
+		for i in ligandBondedToMetal:
+			atomsColumns = self.__listAtoms[i-1].split()
+			rankL.append(self.__equivalenceRank[i-1])
+		objF = FormulaHandling()
+		objF.generateMolecularFormula(rankL,newChelates)
+		objF2 = FormulaHandling()
+		objF2.generateEnumerationFormula(rankL,newChelates)
+		rankToTypesMap = objF.calculateNewMapBetweenAtomsAndTypes(rankL,newChelates)
+		if objF.getFormula() == objF2.getFormula():
+			print(objF.getFormula())
+			print('chelates:  ',self.__chelates)
+		else:
+			print('no chelates ', formula2)
+			print('')
+
+		#printar o metal tambem
+		for i in range(len(ligandBondedToMetal)):
+			print('ligand:  ', ligandBondedToMetal[i], '  type:  ',rankToTypesMap[rankL[i]])
+	
+	
+	
+	
+	
+	
 		ligandsBondedToMetal = []
 		i = 0
 		while i < len(self.__listBonds):
@@ -153,6 +188,65 @@ class Mol2ToMol:
 
 
 
+	def _findChelations(self):
+		if len(self.__metalsInMol2File) > 1:
+			raise Exception("Metal number error - more than one")
+
+		#building graph		
+		graph = {}
+		for i in range(len(self.__listAtoms)):
+			graph[i+1] = self._getAtomBonds(i+1)
+	
+		ligandBondedToMetal = graph[self.__metalsInMol2File[0] + 1]
+		
+		del graph[self.__metalsInMol2File[0] + 1]
+		
+		chelates = []
+		for i in range(len(ligandBondedToMetal) - 1):
+			alreadyFound = False
+			for chel in chelates:
+				if i in chel:
+					alreadyFound = True
+					break
+			if alreadyFound:
+				continue
+
+			j = i + 1
+			auxChelates = [i]
+			while j < len(ligandBondedToMetal):
+				pathToJ = self._findAnyGraphPath(graph, ligandBondedToMetal[i], ligandBondedToMetal[j])
+				if not pathToJ is None:
+					auxChelates.append(j)
+				j+=1
+			chelates.append(auxChelates)		
+
+		self.__chelates = [s for s in chelates if len(s) != 1]
+
+		
+		
+	
+	def _findAnyGraphPath(self, graph, start, end, path=[]):
+		path = path + [start]
+		if start == end:
+			return path
+		if not start in graph:
+			return None
+		for node in graph[start]:
+			if node not in path:
+				newpath = self._findAnyGraphPath(graph, node, end, path)
+				if newpath: return newpath
+		return None	
+
+	def _getAtomBonds(self, atomI):
+		atomsBonded = []
+		for i in range(len(self.__listBonds)):
+			auxB1 = int(self.__listBonds[i].split()[1])
+			auxB2 = int(self.__listBonds[i].split()[2])
+			if auxB1 == atomI:
+				atomsBonded.append(auxB2)		
+			if auxB2 == atomI:
+				atomsBonded.append(auxB1)
+		return atomsBonded
 
 
 

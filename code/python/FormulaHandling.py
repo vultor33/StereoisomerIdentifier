@@ -481,6 +481,26 @@ class FormulaHandling:
 				chelatesList[i][j] = auxTypes.index(newMap[oldMap[chelatesList[i][j]]])
 				auxTypes[chelatesList[i][j]] = -1
 
+
+	def calculateNewMapBetweenAtomsAndTypes(self, rank, chelatesList):
+		if chelatesList == []:
+			return
+		
+		oldMap = {}
+		for chel in chelatesList:
+			for chelI in chel:
+				oldMap[chelI] = rank[chelI]
+				
+		newMap = {}
+		rankCounting = Counter(rank)
+		oldRankCounting = dict(rankCounting)
+		for i in range(len(oldRankCounting)):
+			maxKey = max(oldRankCounting.items(), key=operator.itemgetter(1))[0]
+			newMap[maxKey] = i
+			del oldRankCounting[maxKey]
+		
+		return newMap
+
 	
 
 	def calculateAllChelateCombinations(self,size):
