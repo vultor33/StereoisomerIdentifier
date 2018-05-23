@@ -1,7 +1,7 @@
 from collections import Counter
 import itertools
 import math
-
+import operator
 
 alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','e','s','t','u','v','x','w','y','z'] # gerar alfabeto com o python
 
@@ -55,6 +55,206 @@ class GenerateAllFormulas:
 						else:
 							print(" Error:  ",str(e))
 
+	def redefineFormulas(self):
+		#Modify the function: self.printFile to its final form
+		allFormFile = open("allFormulasRedefined.py", "w")
+		allFormFile.write("allFormList = []\n")
+	
+		ncoord = 1
+		allFormFile.write("aux1FormList = []\n")
+		for i in range(len(allFormList1)):
+			objFormula = FormulaHandling()
+			if allFormList1[i][2] == ['None']:
+				objFormula.generateMolecularFormula(allFormList1[i][1],[])
+			else:
+				objFormula.generateMolecularFormula(allFormList1[i][1],allFormList1[i][2])
+			allFormList1[i][1] = objFormula.getReferenceLine()
+			allFormList1[i][2] = objFormula.getCanonChelation()
+			objFormula2 = FormulaHandling()
+			if allFormList1[i][2] == ['None']:
+				objFormula2.generateEnumerationFormula(allFormList1[i][1],[])
+			else:
+				objFormula2.generateEnumerationFormula(allFormList1[i][1],allFormList1[i][2])
+		
+			allFormFile.write("aux1FormList.append([{},\'{}\',\'{}\',{},{}])\n".format(
+			ncoord,
+			allFormList1[i][0],
+			objFormula2.getFormula(),
+			objFormula.getReferenceLine(),
+			objFormula.getCanonChelation()))
+		allFormFile.write("allFormList.append(aux1FormList)\n")
+	
+		ncoord = 2
+		allFormFile.write("aux2FormList = []\n")
+		for i in range(len(allFormList2)):
+			objFormula = FormulaHandling()
+			if allFormList2[i][2] == ['None']:
+				objFormula.generateMolecularFormula(allFormList2[i][1],[])
+			else:
+				objFormula.generateMolecularFormula(allFormList2[i][1],allFormList2[i][2])
+			allFormList2[i][1] = objFormula.getReferenceLine()
+			allFormList2[i][2] = objFormula.getCanonChelation()
+			objFormula2 = FormulaHandling()
+			if allFormList2[i][2] == ['None']:
+				objFormula2.generateEnumerationFormula(allFormList2[i][1],[])
+			else:
+				objFormula2.generateEnumerationFormula(allFormList2[i][1],allFormList2[i][2])
+		
+			allFormFile.write("aux2FormList.append([{},\'{}\',\'{}\',{},{}])\n".format(
+			ncoord,
+			allFormList2[i][0],
+			objFormula2.getFormula(),
+			objFormula.getReferenceLine(),
+			objFormula.getCanonChelation()))
+		allFormFile.write("allFormList.append(aux2FormList)\n")
+	
+		ncoord = 3
+		allFormFile.write("aux3FormList = []\n")
+		for i in range(len(allFormList3)):
+			objFormula = FormulaHandling()
+			if allFormList3[i][2] == ['None']:
+				objFormula.generateMolecularFormula(allFormList3[i][1],[])
+			else:
+				objFormula.generateMolecularFormula(allFormList3[i][1],allFormList3[i][2])
+			allFormList3[i][1] = objFormula.getReferenceLine()
+			allFormList3[i][2] = objFormula.getCanonChelation()
+			objFormula2 = FormulaHandling()
+			if allFormList3[i][2] == ['None']:
+				objFormula2.generateEnumerationFormula(allFormList3[i][1],[])
+			else:
+				objFormula2.generateEnumerationFormula(allFormList3[i][1],allFormList3[i][2])
+	
+			allFormFile.write("aux3FormList.append([{},\'{}\',\'{}\',{},{}])\n".format(
+			ncoord,
+			allFormList3[i][0],
+			objFormula2.getFormula(),
+			objFormula.getReferenceLine(),
+			objFormula.getCanonChelation()))
+		allFormFile.write("allFormList.append(aux3FormList)\n")
+	
+		ncoord = 4
+		allFormFile.write("aux4FormList = []\n")
+		for i in range(len(allFormList4)):
+			objFormula = FormulaHandling()
+			if allFormList4[i][2] == ['None']:
+				objFormula.generateMolecularFormula(allFormList4[i][1],[])
+			else:
+				objFormula.generateMolecularFormula(allFormList4[i][1],allFormList4[i][2])
+			allFormList4[i][1] = objFormula.getReferenceLine()
+			allFormList4[i][2] = objFormula.getCanonChelation()
+			objFormula2 = FormulaHandling()
+			if allFormList4[i][2] == ['None']:
+				objFormula2.generateEnumerationFormula(allFormList4[i][1],[])
+			else:
+				objFormula2.generateEnumerationFormula(allFormList4[i][1],allFormList4[i][2])
+		
+			allFormFile.write("aux4FormList.append([{},\'{}\',\'{}\',{},{}])\n".format(
+			ncoord,
+			allFormList4[i][0],
+			objFormula2.getFormula(),
+			objFormula.getReferenceLine(),
+			objFormula.getCanonChelation()))
+		allFormFile.write("allFormList.append(aux4FormList)\n")
+	
+		ncoord = 5
+		allFormFile.write("aux5FormList = []\n")
+		for i in range(len(allFormList5)):
+			objFormula = FormulaHandling()
+			if allFormList5[i][2] == ['None']:
+				objFormula.generateMolecularFormula(allFormList5[i][1],[])
+			else:
+				objFormula.generateMolecularFormula(allFormList5[i][1],allFormList5[i][2])
+			allFormList5[i][1] = objFormula.getReferenceLine()
+			allFormList5[i][2] = objFormula.getCanonChelation()
+			objFormula2 = FormulaHandling()
+			if allFormList5[i][2] == ['None']:
+				objFormula2.generateEnumerationFormula(allFormList5[i][1],[])
+			else:
+				objFormula2.generateEnumerationFormula(allFormList5[i][1],allFormList5[i][2])
+		
+			allFormFile.write("aux5FormList.append([{},\'{}\',\'{}\',{},{}])\n".format(
+			ncoord,
+			allFormList5[i][0],
+			objFormula2.getFormula(),
+			objFormula.getReferenceLine(),
+			objFormula.getCanonChelation()))
+		allFormFile.write("allFormList.append(aux5FormList)\n")
+	
+		ncoord = 6
+		allFormFile.write("aux6FormList = []\n")
+		for i in range(len(allFormList6)):
+			objFormula = FormulaHandling()
+			if allFormList6[i][2] == ['None']:
+				objFormula.generateMolecularFormula(allFormList6[i][1],[])
+			else:
+				objFormula.generateMolecularFormula(allFormList6[i][1],allFormList6[i][2])
+			allFormList6[i][1] = objFormula.getReferenceLine()
+			allFormList6[i][2] = objFormula.getCanonChelation()
+			objFormula2 = FormulaHandling()
+			if allFormList6[i][2] == ['None']:
+				objFormula2.generateEnumerationFormula(allFormList6[i][1],[])
+			else:
+				objFormula2.generateEnumerationFormula(allFormList6[i][1],allFormList6[i][2])
+		
+			allFormFile.write("aux6FormList.append([{},\'{}\',\'{}\',{},{}])\n".format(
+			ncoord,
+			allFormList6[i][0],
+			objFormula2.getFormula(),
+			objFormula.getReferenceLine(),
+			objFormula.getCanonChelation()))
+		allFormFile.write("allFormList.append(aux6FormList)\n")
+	
+		ncoord = 7
+		allFormFile.write("aux7FormList = []\n")
+		for i in range(len(allFormList7)):
+			objFormula = FormulaHandling()
+			if allFormList7[i][2] == ['None']:
+				objFormula.generateMolecularFormula(allFormList7[i][1],[])
+			else:
+				objFormula.generateMolecularFormula(allFormList7[i][1],allFormList7[i][2])
+			allFormList7[i][1] = objFormula.getReferenceLine()
+			allFormList7[i][2] = objFormula.getCanonChelation()
+			objFormula2 = FormulaHandling()
+			if allFormList7[i][2] == ['None']:
+				objFormula2.generateEnumerationFormula(allFormList7[i][1],[])
+			else:
+				objFormula2.generateEnumerationFormula(allFormList7[i][1],allFormList7[i][2])
+		
+			allFormFile.write("aux7FormList.append([{},\'{}\',\'{}\',{},{}])\n".format(
+			ncoord,
+			allFormList7[i][0],
+			objFormula2.getFormula(),
+			objFormula.getReferenceLine(),
+			objFormula.getCanonChelation()))
+		allFormFile.write("allFormList.append(aux7FormList)\n")
+	
+		ncoord = 8
+		allFormFile.write("aux8FormList = []\n")
+		for i in range(len(allFormList8)):
+			objFormula = FormulaHandling()
+			if allFormList8[i][2] == ['None']:
+				objFormula.generateMolecularFormula(allFormList8[i][1],[])
+			else:
+				objFormula.generateMolecularFormula(allFormList8[i][1],allFormList8[i][2])
+			allFormList8[i][1] = objFormula.getReferenceLine()
+			allFormList8[i][2] = objFormula.getCanonChelation()
+			objFormula2 = FormulaHandling()
+			if allFormList8[i][2] == ['None']:
+				objFormula2.generateEnumerationFormula(allFormList8[i][1],[])
+			else:
+				objFormula2.generateEnumerationFormula(allFormList8[i][1],allFormList8[i][2])
+		
+			allFormFile.write("aux8FormList.append([{},\'{}\',\'{}\',{},{}])\n".format(
+			ncoord,
+			allFormList8[i][0],
+			objFormula2.getFormula(),
+			objFormula.getReferenceLine(),
+			objFormula.getCanonChelation()))
+		allFormFile.write("allFormList.append(aux8FormList)\n")
+	
+		allFormFile.close()
+		
+	
 
 	def printFile(self):
 		allFormFile = open("allFormulas.py", "w")
@@ -116,6 +316,29 @@ class FormulaHandling:
 	def getCanonChelation(self):
 		return self.__canonChelation
 
+	#define whole object
+	def generateEnumerationFormula(self, rank, chelations):
+		oldMap = {}
+		for chel in chelations:
+			for chelI in chel:
+				oldMap[chelI] = rank[chelI]
+
+		duplicate = False
+		for i in range(len(chelations)-1):
+			for j in range(len(chelations)):
+				if i == j:
+					continue
+				for chelI in chelations[i]:
+					for chelJ in chelations[j]:
+						if oldMap[chelI] == oldMap[chelJ]:
+							duplicate = True
+		if duplicate:
+			self.generateMolecularFormula(rank, chelations)
+		else:
+			self.generateMolecularFormula(rank, [])
+
+	
+	#define whole object
 	def generateMolecularFormula(self, rank, chelations):	
 		if self._chelationsConflict(chelations):
 			raise Exception('chelations not well defined')
@@ -225,6 +448,40 @@ class FormulaHandling:
 			k += tempK + 1
 			i+=1
 
+		self.redefineChelatesTypes(self.__referenceLineVector,self.__canonChelation)
+
+
+	def redefineChelatesTypes(self, rank, chelatesList):
+		if chelatesList == []:
+			return
+		
+		oldMap = {}
+		for chel in chelatesList:
+			for chelI in chel:
+				oldMap[chelI] = rank[chelI]
+				
+		newMap = {}
+		rankCounting = Counter(rank)
+		oldRankCounting = dict(rankCounting)
+		for i in range(len(oldRankCounting)):
+			maxKey = max(oldRankCounting.items(), key=operator.itemgetter(1))[0]
+			newMap[maxKey] = i
+			del oldRankCounting[maxKey]
+		
+		auxTypes = []
+		for key in rankCounting:
+			for i in range(rankCounting[key]):
+				auxTypes.append(newMap[key])
+
+		auxTypes.sort()
+		for i in range(len(auxTypes)):
+			rank[i] = auxTypes[i]
+		for i in range(len(chelatesList)):
+			for j in range(len(chelatesList[i])):
+				chelatesList[i][j] = auxTypes.index(newMap[oldMap[chelatesList[i][j]]])
+				auxTypes[chelatesList[i][j]] = -1
+
+	
 
 	def calculateAllChelateCombinations(self,size):
 		allChelComb = []
