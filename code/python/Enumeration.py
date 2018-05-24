@@ -68,7 +68,7 @@ class Enumeration:
 		self._correctSubstratal(substratalS, 'S')
 	
 
-	def makeEnumeration(self, formula, colorFirst, chelateFirst):
+	def makeEnumeration(self, formula, colorFirst, chelateFirst, counting):
 
 		enumOut = open(self.__geoCodeString[self.__geoCode] + '-' + formula + ".csv", "w")
 		referenceLine = self.__geoCodeString[self.__geoCode] + '  '
@@ -129,6 +129,7 @@ class Enumeration:
 				i+=1
 			enumOut.write("R\nS\n")			
 			enumOut.close()
+			counting.append(len(stereos))
 			return
 		
 
@@ -157,8 +158,11 @@ class Enumeration:
 			if iCompare[0] >= iCompare[1]:
 				continue
 			
-			if any(elem in iCompare for elem in achiralsRemoved):
+			if iCompare[0] in achiralsRemoved:
 				continue
+			if iCompare[1] in achiralsRemoved:
+				continue
+
 
 			if self._compareWithRotation(
 			self._painting(colorFirst,self.__substratalR[iCompare[0]]),
@@ -187,6 +191,7 @@ class Enumeration:
 				else:
 					enumOut.write(";2\n")
 			i+=1
+		counting.append(len(achirals))
 		del achirals
 		del rcwAchiralCounter
 
@@ -200,7 +205,9 @@ class Enumeration:
 			if iCompare[0] >= iCompare[1]:
 				continue
 			
-			if any(elem in iCompare for elem in chiralsRemoved):
+			if iCompare[0] in chiralsRemoved:
+				continue
+			if iCompare[1] in chiralsRemoved:
 				continue
 			
 			if self._compareWithRotation(
@@ -253,6 +260,7 @@ class Enumeration:
 			i+=1
 
 		enumOut.close()
+		counting.append(len(chirals))
 
 
 
@@ -298,6 +306,9 @@ class Enumeration:
 		for iChel in range(len(lisChelate1)):
 			lisChelate1[iChel].sort()
 			lisChelate2[iChel].sort()
+		
+		lisChelate1.sort()
+		lisChelate2.sort()
 		
 		if lisPermut1 == lisPermut2:
 			if lisChelate1 == lisChelate2:

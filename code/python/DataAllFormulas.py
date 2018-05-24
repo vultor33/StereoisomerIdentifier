@@ -1,4 +1,4 @@
-allFormList = []
+allFormList = [[0]]
 aux1FormList = []
 aux1FormList.append([1,'a','a',[0],[]])
 allFormList.append(aux1FormList)
