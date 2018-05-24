@@ -1,20 +1,21 @@
 from Enumeration import Enumeration
-from DataAllFormulas import allFormList
+from DataAllFormulas import allFormList 
 from FormulaHandling import FormulaHandling
 from collections import Counter
 import operator
 
-geoCode = 61
-ncoord = 6
+geoCode = 80
+ncoord = 8
 
 obj1 = Enumeration(geoCode)
 enumeratedFormulas = []
 
 countingFile = open("{}-counting.csv".format(geoCode),"w")
 for i in range(len(allFormList[ncoord])):
-	if i != 59:
-		continue
-	print('i:   ',i)
+#	if i != 1:
+#		continue
+	print('i:   ',i,'  formula:   ',allFormList[ncoord][i][1], '  enumF:  ',allFormList[ncoord][i][2])
+
 	if allFormList[ncoord][i][2] in enumeratedFormulas:
 		continue
 

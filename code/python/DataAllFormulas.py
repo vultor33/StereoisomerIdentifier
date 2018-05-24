@@ -1,3 +1,4 @@
+#WARNING - monodentates have to come first
 allFormList = [[0]]
 aux1FormList = []
 aux1FormList.append([1,'a','a',[0],[]])

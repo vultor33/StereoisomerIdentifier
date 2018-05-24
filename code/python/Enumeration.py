@@ -30,6 +30,8 @@ class Enumeration:
 		rotInput = open(fileName,"r")
 		rotFileStream = rotInput.read().splitlines()
 		for line in rotFileStream:
+			if line == '':
+				break
 			rotI = []
 			for iNum in line.split():
 				rotI.append(int(float(iNum)))
@@ -80,9 +82,8 @@ class Enumeration:
 			referenceLine += 'cI-length: ' + str(len(chel)) + ' cI: '
 			for chelI in chel:
 				referenceLine += str(chelI) + ' '
-		enumOut.write("{}\nG\n".format(referenceLine))
 
-		
+		enumOut.write("{}\n".format(referenceLine))
 
 		# direct counting
 		if len(self.__substratalG) != 0:
@@ -116,6 +117,7 @@ class Enumeration:
 			del rcwStereo
 			
 			#PRINTING
+			enumOut.write("G  {}\n".format(len(stereos)))
 			i = 0
 			while i < len(self.__substratalG):
 				if i in stereos:
@@ -127,7 +129,7 @@ class Enumeration:
 					else:
 						enumOut.write(";1\n")
 				i+=1
-			enumOut.write("R\nS\n")			
+			enumOut.write("R  0\nS  0\n")			
 			enumOut.close()
 			counting.append(len(stereos))
 			return
@@ -180,6 +182,7 @@ class Enumeration:
 		del rcwAchiral
 
 		#PRINTING
+		enumOut.write("G  {}\n".format(len(achirals)))
 		i = 0
 		while i < len(self.__substratalR):
 			if i in achirals:
@@ -234,7 +237,7 @@ class Enumeration:
 		del rcwChiral
 
 		#PRINTING
-		enumOut.write("R\n")
+		enumOut.write("R  {}\n".format(len(chirals)))
 		i = 0
 		while i < len(self.__substratalR):
 			if i in chirals:
@@ -246,7 +249,7 @@ class Enumeration:
 				else:
 					enumOut.write(";1\n")
 			i+=1
-		enumOut.write("S\n")
+		enumOut.write("S  {}\n".format(len(chirals)))
 		i = 0
 		while i < len(self.__substratalS):
 			if i in chirals:
