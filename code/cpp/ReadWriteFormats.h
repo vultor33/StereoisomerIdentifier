@@ -4,6 +4,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <sstream>
 
 class ReadWriteFormats
 {
@@ -32,15 +33,8 @@ public:
 		std::ifstream & file_,
 		std::vector<int> & atomTypes,
 		std::vector< std::vector<int> > & chelates);
-	/*
-	// letters / bidentares   --> format
-	void readAtomTypesAndBidentateChosenFileWithLetters(
-		std::ifstream & file_,
-		std::vector<int> & atomTypes,
-		std::vector<int> & bidentateChosen,
-		int systemSize,
-		int nBidentates);
-		*/
+
+	std::vector< std::vector<int> > readChelates(std::stringstream &ssLine);
 
 	// {SAPR-8 [Ma2b2c2] [1 2 3 4 5 6 7 8] Aa} --> format
 	std::vector<int> readCauchyNotationsEnantiomers(

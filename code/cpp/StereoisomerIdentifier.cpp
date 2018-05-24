@@ -8,17 +8,79 @@
 #include "MarquesEnantiomers.h"
 #include "ReadWriteFormats.h"
 
+using namespace std;
+
 StereoisomerIdentifier::StereoisomerIdentifier(){}
 
 StereoisomerIdentifier::~StereoisomerIdentifier(){}
 
-using namespace std;
-
 void StereoisomerIdentifier::identify(const string &fileName)
+{
+	ofstream cppOut_((fileName + ".log").c_str());
+	string molecularFormula;
+	vector<int> atomTypesCahnIngoldPrelog;
+	vector< vector<int> > chelates;
+	vector<CoordXYZ> coordMol = readInput(
+		fileName,
+		molecularFormula,
+		atomTypesCahnIngoldPrelog,
+		chelates);
+
+	int geoCode;
+	double rmsd;
+	std::vector<CoordXYZ> idealGeo = findShape(coordMol, geoCode, rmsd);
+
+	if (rmsd > 0.15e0)
+	{
+		cppOut_ << fileName << ";rmsd greater than 0.15;" << rmsd;
+		cppOut_.close();
+		return;
+	}
+
+
+	int steroisomerIndex;
+	Geometries geo_;
+	string stereoLetter;
+	vector<int> idealTypes;
+	vector< vector<int> > idealChelates;
+	string isomerLine = findStereoisomer(
+		//input
+		idealGeo,
+		molecularFormula,
+		geoCode,
+		//CSD
+		coordMol, //remove metal, add types and chelates
+		atomTypesCahnIngoldPrelog,
+		chelates,
+		//output
+		idealTypes,
+		idealChelates,
+		steroisomerIndex,
+		stereoLetter);
+
+	cppOut_ << fileName << ";"
+		<< geo_.sizeToGeometryCodeLetter(geoCode) << "-" << stereoLetter << steroisomerIndex << ";"
+		<< rmsd << ";"
+		<< isomerLine << ";"
+		<< endl;
+	cppOut_.close();
+
+
+	// APAGAAAR DEPOIS DOS TESTESSSS
+	vector<int> permutationI = readCauchyNotationsEnantiomers(isomerLine, idealGeo.size());
+	for (size_t i = 0; i < idealGeo.size(); i++)
+		idealGeo[i].atomlabel = setLabel(idealTypes[permutationI[i] - 1]);
+	printMol(idealGeo, fileName + "-idealGeo.xyz");
+	printMol(coordMol, fileName + "-coordMol.xyz");
+}
+
+
+
+void StereoisomerIdentifier::identifyMonoVersion(const string &fileName)
 {
 	string molecularFormula;
 	vector<int> atomTypesCahnIngoldPrelog;
-	vector<CoordXYZ> coordMol = readInput(
+	vector<CoordXYZ> coordMol = readInputMonoVersion(
 		fileName, 
 		molecularFormula,
 		atomTypesCahnIngoldPrelog);
@@ -30,7 +92,7 @@ void StereoisomerIdentifier::identify(const string &fileName)
 	vector<int> referenceLineVector;
 	Geometries geo_;
 	string stereoLetter;
-	string isomerLine = findStereoisomer(
+	string isomerLine = findStereoisomerMonoVersion(
 		molecularFormula,
 		geoCode,
 		indexLine,
@@ -61,13 +123,13 @@ void StereoisomerIdentifier::identify(const string &fileName)
 
 }
 
-void StereoisomerIdentifier::generateAllMol()
+void StereoisomerIdentifier::generateAllMol(string &fileName, int geoCode)
 {
-	remove("testeG.xyz");
-	remove("testeR.xyz");
-	remove("testeS.xyz");
+	remove("testG.xyz");
+	remove("testR.xyz");
+	remove("testS.xyz");
 	ReadWriteFormats rwf_;
-	ifstream file_("OC-6-a3b2c.csv");
+	ifstream file_(fileName.c_str());
 	vector<int> atomTypes;
 	vector< vector<int> > chel;
 	rwf_.readAtomTypesAndChelates(file_, atomTypes, chel);
@@ -77,7 +139,7 @@ void StereoisomerIdentifier::generateAllMol()
 	double dummy;
 	vector<int> reflecDummy;
 	geo_.selectGeometry(
-		60,
+		geoCode,
 		idealGeo,
 		dummy,
 		reflecDummy);
@@ -102,34 +164,20 @@ void StereoisomerIdentifier::generateAllMol()
 		for (size_t i = 0; i < atomTypes.size(); i++)
 			convertLine >> permutation[i];
 
-// APAGAR O COUT DEPOIS DOS TESTES
 		for (size_t k = 0; k < idealGeo.size(); k++)
-		{
 			idealGeo[k].atomlabel = setLabel(atomTypes[permutation[k]]);
-//			cout << permutation[k] << "  ";
-		}
-//		cout << endl;
-//		for (size_t i = 0; i < idealGeo.size(); i++)
-//			cout << atomTypes[permutation[i]] << "  ";
-//		cout << endl;
 		vector< vector<int> > chelPermuted = chel;
 		for (size_t i = 0; i < chelPermuted.size(); i++)
 		{
 			for (size_t j = 0; j < chelPermuted[i].size(); j++)
-			{
 				chelPermuted[i][j] = findIndexByValue(permutation, chelPermuted[i][j]);
-//				cout << chelPermuted[i][j] << "  ";
-			}
-//			cout << "xxx";
 		}
-//		cout << endl;
 
 		printMol(
 			idealGeo,
 			chelPermuted,
 			letterType,
-			"teste" + letterType + ".xyz");
-		
+			"test" + letterType + ".xyz");
 	}
 }
 
@@ -188,6 +236,58 @@ void StereoisomerIdentifier::reescaleMetalLigandDistancesToOne(vector<CoordXYZ> 
 
 
 std::vector<CoordXYZ> StereoisomerIdentifier::readInput(
+	const std::string &fileName,
+	std::string &formula,
+	std::vector<int> &atomTypesCahnIngoldPrelog,
+	std::vector< std::vector<int> > & chelates)
+{
+	ifstream input_(fileName.c_str());
+	string line;
+	getline(input_, line);
+	stringstream convert1;
+	convert1 << line;
+	convert1 >> formula;
+	stringstream convertChelates;
+	getline(input_, line);
+	convertChelates << line;
+	ReadWriteFormats rwf_;
+	chelates = rwf_.readChelates(convertChelates);
+
+	string dum1;
+	vector<double> xInp, yInp, zInp;
+	while (getline(input_, line))
+	{
+		if (line == "end")
+			break;
+
+		double auxX, auxY, auxZ;
+		int auxRank;
+		stringstream convert;
+		convert << line;
+		convert >> dum1 >> auxX >> auxY >> auxZ >> auxRank;
+		xInp.push_back(auxX);
+		yInp.push_back(auxY);
+		zInp.push_back(auxZ);
+		atomTypesCahnIngoldPrelog.push_back(auxRank);
+	}
+
+	size_t nCoord = xInp.size();
+	vector<CoordXYZ> coordMol;
+	for (size_t i = 0; i < atomTypesCahnIngoldPrelog.size(); i++)
+	{
+		CoordXYZ auxMol2;
+		auxMol2.atomlabel = "H";
+		auxMol2.x = xInp[i];
+		auxMol2.y = yInp[i];
+		auxMol2.z = zInp[i];
+		coordMol.push_back(auxMol2);
+	}
+	reescaleMetalLigandDistancesToOne(coordMol);
+	return coordMol;
+}
+
+
+std::vector<CoordXYZ> StereoisomerIdentifier::readInputMonoVersion(
 	const std::string &fileName, 
 	std::string &formula,
 	std::vector<int> &atomTypesCahnIngoldPrelog)
@@ -284,7 +384,92 @@ std::vector<CoordXYZ> StereoisomerIdentifier::findShape(
 
 }
 
-string StereoisomerIdentifier::findStereoisomer(
+
+std::string StereoisomerIdentifier::findStereoisomer(
+	//input
+	const std::vector<CoordXYZ> &idealGeo,
+	const std::string &molecularFormula,
+	const int geoCode,
+	//CSD
+	std::vector<CoordXYZ> &coordMol, //remove metal, add types and chelates
+	std::vector<int> &atomTypesCahnIngoldPrelog,
+	std::vector< std::vector<int> > &chelates,
+	//output
+	std::vector<int> &idealTypes,
+	std::vector< std::vector<int> > &idealChelates,
+	int &steroisomerIndex,
+	std::string &stereoLetter)
+{
+	Geometries geo_;
+	ReadWriteFormats rwf_;
+	MarquesEnantiomers mqRmsd_;
+
+	coordMol.erase(coordMol.begin());
+	atomTypesCahnIngoldPrelog.erase(atomTypesCahnIngoldPrelog.begin());//metal removed
+	for (size_t i = 0; i < coordMol.size(); i++)
+		coordMol[i].atomlabel = setLabel(atomTypesCahnIngoldPrelog[i]);
+
+	string fileIsomerPath = filePath(coordMol.size(), geo_.sizeToGeometryCode(geoCode));
+	fileIsomerPath += geo_.sizeToGeometryCode(geoCode) + "-" + molecularFormula + ".csv";
+	ifstream fileIsomers_(fileIsomerPath.c_str());
+	rwf_.readAtomTypesAndChelates(
+		fileIsomers_,
+		idealTypes,
+		idealChelates);
+
+	addChelate(coordMol, chelates);
+
+	int stereoIndexLine = 0;
+	double minimumRmsd = 1.0e99;
+	double auxRmsd;
+	string line;
+	string letterType = "";
+	string minimumLine;
+	while (getline(fileIsomers_, line))
+	{
+		if ((line == "G") || (line == "R") || (line == "S"))
+		{
+			letterType = line;
+			stereoIndexLine = 0;
+			continue;
+		}
+		stereoIndexLine++;
+
+		vector<CoordXYZ> outGeometry = coordMol;
+		vector<CoordXYZ> molI = idealGeo;
+
+		stringstream convertLine;
+		convertLine << line;
+		vector<int> permutation(idealTypes.size());
+		for (size_t i = 0; i < idealTypes.size(); i++)
+			convertLine >> permutation[i];
+
+		for (size_t k = 0; k < molI.size(); k++)
+			molI[k].atomlabel = setLabel(idealTypes[permutation[k]]);
+		vector< vector<int> > chelPermuted = idealChelates;
+		for (size_t i = 0; i < chelPermuted.size(); i++)
+		{
+			for (size_t j = 0; j < chelPermuted[i].size(); j++)
+				chelPermuted[i][j] = findIndexByValue(permutation, chelPermuted[i][j]);
+		}
+		addChelate(molI, chelPermuted);
+
+		auxRmsd = mqRmsd_.marquesRmsdEqualMass(outGeometry, molI);
+
+		if (auxRmsd < minimumRmsd)
+		{
+			minimumRmsd = auxRmsd;
+			minimumLine = line;
+			steroisomerIndex = stereoIndexLine;
+			stereoLetter = letterType;
+		}
+	}
+	fileIsomers_.close();
+	return minimumLine;
+}
+
+
+string StereoisomerIdentifier::findStereoisomerMonoVersion(
 	const std::string &molecularFormula,
 	const int geoCode,
 	int &indexLine,
@@ -390,6 +575,7 @@ void StereoisomerIdentifier::printMol(
 	std::string letter,
 	const std::string &fileName)
 {
+	//WATCH ATOM TYPES OF THE CHELATES POINTS
 	ofstream out_;
 	out_.open(fileName.c_str(), std::ofstream::out | std::ofstream::app);
 	double reescale = 2.0e0;
@@ -420,7 +606,7 @@ void StereoisomerIdentifier::printMol(
 				meanPoint.x = reescale * (mol[chel2].x - mol[chel1].x);
 				meanPoint.y = reescale * (mol[chel2].y - mol[chel1].y);
 				meanPoint.z = reescale * (mol[chel2].z - mol[chel1].z);
-				out_ << setLabel(11-i) << "  "//FREDMUDAAAARRRRssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
+				out_ << setLabel(11-i) << "  "
 					<< reescale * mol[chel1].x + meanPoint.x * 0.25e0 << "  "
 					<< reescale * mol[chel1].y + meanPoint.y * 0.25e0 << "  "
 					<< reescale * mol[chel1].z + meanPoint.z * 0.25e0 << endl;
@@ -434,6 +620,37 @@ void StereoisomerIdentifier::printMol(
 
 
 	out_.close();
+}
+
+
+void StereoisomerIdentifier::addChelate(std::vector<CoordXYZ> &mol, std::vector< std::vector<int> > &chelates)
+{
+	for (size_t i = 0; i < chelates.size(); i++)
+	{
+		for (size_t j = 0; j < chelates[i].size() - 1; j++)
+		{
+			for (size_t k = j + 1; k < chelates[i].size(); k++)
+			{
+				size_t chel1 = chelates[i][j];
+				size_t chel2 = chelates[i][k];
+				CoordXYZ auxPoint1;
+				auxPoint1.atomlabel = "H";
+				auxPoint1.x = (mol[chel2].x - mol[chel1].x);
+				auxPoint1.y = (mol[chel2].y - mol[chel1].y);
+				auxPoint1.z = (mol[chel2].z - mol[chel1].z);
+				CoordXYZ auxPoint2;
+				auxPoint2.atomlabel = "H";
+				auxPoint2.x = mol[chel1].x + auxPoint1.x * 0.25e0;
+				auxPoint2.y = mol[chel1].y + auxPoint1.y * 0.25e0;
+				auxPoint2.z = mol[chel1].z + auxPoint1.z * 0.25e0;
+				auxPoint1.x = mol[chel1].x + auxPoint1.x * 0.75e0;
+				auxPoint1.y = mol[chel1].y + auxPoint1.y * 0.75e0;
+				auxPoint1.z = mol[chel1].z + auxPoint1.z * 0.75e0;
+				mol.push_back(auxPoint1);
+				mol.push_back(auxPoint2);
+			}
+		}
+	}
 }
 
 std::vector< std::string > StereoisomerIdentifier::readAllPermutations(

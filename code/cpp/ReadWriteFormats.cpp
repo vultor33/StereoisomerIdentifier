@@ -100,20 +100,31 @@ void ReadWriteFormats::readAtomTypesAndChelates(
 	for (int i = 0; i < nCoord; i++)
 		convertLine >> atomTypes[i];
 
-	convertLine >> dum1;
+	chelates = readChelates(convertLine);
+}
+
+
+// python bidentate format:
+// chelates:  3  cI-length:  2  cI: 0  1   cI-length:  2  cI: 2  3   cI-length:  2  cI: 4  5 
+std::vector< std::vector<int> > ReadWriteFormats::readChelates(std::stringstream &ssLine)
+{
+	vector< vector<int> > chelates;
+	string dum1;
 	int nChel;
-	convertLine >> nChel;
+	ssLine >> dum1;
+	ssLine >> nChel;
 	for (int i = 0; i < nChel; i++)
 	{
-		convertLine >> dum1;
+		ssLine >> dum1;
 		int sizeChelI;
-		convertLine >> sizeChelI;
-		convertLine >> dum1;
+		ssLine >> sizeChelI;
+		ssLine >> dum1;
 		vector<int> chelI(sizeChelI);
 		for (int j = 0; j < sizeChelI; j++)
-			convertLine >> chelI[j];
+			ssLine >> chelI[j];
 		chelates.push_back(chelI);
 	}
+	return chelates;
 }
 
 
