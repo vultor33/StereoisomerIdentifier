@@ -16,6 +16,7 @@ StereoisomerIdentifier::~StereoisomerIdentifier(){}
 
 void StereoisomerIdentifier::identify(const string &fileName)
 {
+	Geometries geo_;
 	ofstream cppOut_((fileName + ".log").c_str());
 	string molecularFormula;
 	vector<int> atomTypesCahnIngoldPrelog;
@@ -30,16 +31,41 @@ void StereoisomerIdentifier::identify(const string &fileName)
 	double rmsd;
 	std::vector<CoordXYZ> idealGeo = findShape(coordMol, geoCode, rmsd);
 
+	if (geoCode == 20)
+	{
+		if (rmsd > 0.01)
+		{
+			cppOut_ << fileName << ";"
+				<< "A-2;"
+				<< rmsd << ";0;"
+				<< endl;
+		}
+		else
+		{
+			cppOut_ << fileName << ";"
+				<< "L-2;"
+				<< rmsd << ";0;"
+				<< endl;
+		}
+	}
 	if (rmsd > 0.15e0)
 	{
-		cppOut_ << fileName << ";rmsd greater than 0.15;" << rmsd;
+
+		cppOut_ << fileName << ";failed;rmsd greater than 0.15;" << rmsd;
 		cppOut_.close();
+		return;
+	}
+	if (geoCode == 32)
+	{
+		cppOut_ << fileName << ";"
+			<< geo_.sizeToGeometryCode(geoCode) << ";"
+			<< rmsd << ";0;"
+			<< endl;
 		return;
 	}
 
 
 	int steroisomerIndex;
-	Geometries geo_;
 	string stereoLetter;
 	vector<int> idealTypes;
 	vector< vector<int> > idealChelates;
@@ -59,7 +85,7 @@ void StereoisomerIdentifier::identify(const string &fileName)
 		stereoLetter);
 
 	cppOut_ << fileName << ";"
-		<< geo_.sizeToGeometryCodeLetter(geoCode) << "-" << stereoLetter << steroisomerIndex << ";"
+		<< geo_.sizeToGeometryCode(geoCode) << "-" << stereoLetter << "-" << steroisomerIndex << ";"
 		<< rmsd << ";"
 		<< isomerLine << ";"
 		<< endl;
