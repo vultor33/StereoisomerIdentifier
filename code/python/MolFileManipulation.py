@@ -23,6 +23,7 @@ class Mol2ToMol:
 		self.__fileMol2Name = ""
 		self.__equivalenceRank = []
 
+
 		self.__fileMol2Name, fileExtension = os.path.splitext(fileMol2Name)
 		if not fileExtension == '.mol2':
 			return
@@ -46,13 +47,33 @@ class Mol2ToMol:
 		print("\n\nBonds:\n\n",*self.__listBonds,sep="\n")
 		print("metal bond lines: ",self.__metalBondsLines)
 
-	def runStereoisomerIdentifierRmsd(self):
+	def runStereoisomerIdentifierRmsd(self, outputFile_):
 		for iMetal in self.__metalsInMol2File:
-			self._writeCppInput(int(iMetal) + 1)
-			exit()
-			subprocess.call("StereoisomerIdentifierRmsd.exe " + self.__fileMol2Name + "-cpp.inp", shell=True)
-	
-
+			try:
+				outputFile_.write(self.__listAtoms[iMetal].split()[1] + " ; ")
+			
+				status = self._writeCppInput(int(iMetal) + 1)
+				if status == 1:
+					outputFile_.write("L-1;0;")
+				else:
+					subprocess.call("StereoisomerIdentifierRmsd.exe " + self.__fileMol2Name + "-cpp.inp", shell=True)
+					cppOutput_ = open(self.__fileMol2Name + "-cpp.inp.log","r")
+					cppStream_ = cppOutput_.read().splitlines()
+					outputFile_.write(cppStream_[1] + ";" + cppStream_[2] + ";")
+			
+			except Exception as e:
+				if str(e) == "Chem.MolFromMol2File failed":
+					outputFile_.write(" rdkit coldn't read mol2 file;;")
+				elif str(e) == "Metal number error - 0 metals":
+					outputFile_.write(" Couldn't find any metal at .mol2 file;;")
+				elif str(e) == "Metal number error - more than one":
+					outputFile_.write(" More than one metal at .mol2 file;;")
+				elif str(e) == "Number of ligands error":
+					outputFile_.write(" Number of ligands need to be between 1 and 8;;")
+				elif str(e) == "chelations not well defined":
+					outputFile_.write(" Error on defining formula;;")
+				else:
+					outputFile_.write(" Error:  {}\n".format(str(e)))
 
 	def _extractMol2Info(self):
 		i = 0
@@ -91,8 +112,11 @@ class Mol2ToMol:
 		ligandsBondedToMetal  = []
 		self._findChelations(iMetal, iChelates, ligandsBondedToMetal)
 
-		if len(ligandsBondedToMetal) > 8 or len(ligandsBondedToMetal) < 4: # ADICIOAR OS INICIAIS AQUIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+		if len(ligandsBondedToMetal) > 8:
 			raise Exception("Number of ligands error")
+
+		if len(ligandsBondedToMetal) == 1:
+			return 1
 
 		rankL = []
 		for i in ligandsBondedToMetal:
@@ -116,7 +140,7 @@ class Mol2ToMol:
 			cppInput.write("\n")
 		else:
 			cppInput.write(objFenum.getFormula() + "\n\n")
-	
+
 		atomsColumns = self.__listAtoms[self.__metalsInMol2File[0]].split()
 		cppInput.write("{:>5}{:>10}{:>10}{:>10}{:>5}\n".format(
 		atomsColumns[1],
@@ -135,6 +159,9 @@ class Mol2ToMol:
 			rankToTypesMap[next(rankIndex)]))
 		cppInput.write("end\n")
 		cppInput.close()
+
+		return 0
+		
 
 
 	def _findChelations(self, iMetal, iChelates, ligandsBondedToMetal):

@@ -14,13 +14,15 @@ StereoisomerIdentifier::StereoisomerIdentifier(){}
 
 StereoisomerIdentifier::~StereoisomerIdentifier(){}
 
-void StereoisomerIdentifier::identify(const string &fileName)
+void StereoisomerIdentifier::identify(const string &fileName_in)
 {
+	fileName = fileName_in;
 	Geometries geo_;
 	ofstream cppOut_((fileName + ".log").c_str());
 	string molecularFormula;
 	vector<int> atomTypesCahnIngoldPrelog;
 	vector< vector<int> > chelates;
+
 	vector<CoordXYZ> coordMol = readInput(
 		fileName,
 		molecularFormula,
@@ -35,35 +37,36 @@ void StereoisomerIdentifier::identify(const string &fileName)
 	{
 		if (rmsd > 0.01)
 		{
-			cppOut_ << fileName << ";"
-				<< "A-2;"
-				<< rmsd << ";0;"
-				<< endl;
+			cppOut_ << fileName << endl
+				<< "A-2" << endl
+				<< rmsd << endl;
 		}
 		else
 		{
-			cppOut_ << fileName << ";"
-				<< "L-2;"
-				<< rmsd << ";0;"
-				<< endl;
+			cppOut_ << fileName << endl
+				<< "L-2" << endl
+				<< rmsd << endl;
 		}
+		cppOut_.close();
+		return;
 	}
 	if (rmsd > 0.15e0)
 	{
 
-		cppOut_ << fileName << ";failed;rmsd greater than 0.15;" << rmsd;
+		cppOut_ << fileName << endl
+			<< "failed" << endl
+			<< rmsd << endl;
 		cppOut_.close();
 		return;
 	}
 	if (geoCode == 32)
 	{
-		cppOut_ << fileName << ";"
-			<< geo_.sizeToGeometryCode(geoCode) << ";"
-			<< rmsd << ";0;"
-			<< endl;
+		cppOut_ << fileName << endl
+			<< geo_.sizeToGeometryCode(geoCode) << endl
+			<< rmsd << endl;
+		cppOut_.close();
 		return;
 	}
-
 
 	int steroisomerIndex;
 	string stereoLetter;
@@ -71,7 +74,7 @@ void StereoisomerIdentifier::identify(const string &fileName)
 	vector< vector<int> > idealChelates;
 	string isomerLine = findStereoisomer(
 		//input
-		idealGeo,
+		idealGeo, //add types and chelates
 		molecularFormula,
 		geoCode,
 		//CSD
@@ -84,20 +87,10 @@ void StereoisomerIdentifier::identify(const string &fileName)
 		steroisomerIndex,
 		stereoLetter);
 
-	cppOut_ << fileName << ";"
-		<< geo_.sizeToGeometryCode(geoCode) << "-" << stereoLetter << "-" << steroisomerIndex << ";"
-		<< rmsd << ";"
-		<< isomerLine << ";"
-		<< endl;
+	cppOut_ << fileName << endl
+		<< geo_.sizeToGeometryCode(geoCode) << "-" << stereoLetter << "-" << steroisomerIndex << endl
+		<< rmsd << endl;
 	cppOut_.close();
-
-
-	// APAGAAAR DEPOIS DOS TESTESSSS
-	vector<int> permutationI = readCauchyNotationsEnantiomers(isomerLine, idealGeo.size());
-	for (size_t i = 0; i < idealGeo.size(); i++)
-		idealGeo[i].atomlabel = setLabel(idealTypes[permutationI[i] - 1]);
-	printMol(idealGeo, fileName + "-idealGeo.xyz");
-	printMol(coordMol, fileName + "-coordMol.xyz");
 }
 
 
@@ -273,11 +266,14 @@ std::vector<CoordXYZ> StereoisomerIdentifier::readInput(
 	stringstream convert1;
 	convert1 << line;
 	convert1 >> formula;
-	stringstream convertChelates;
 	getline(input_, line);
-	convertChelates << line;
-	ReadWriteFormats rwf_;
-	chelates = rwf_.readChelates(convertChelates);
+	if (line != "")
+	{
+		stringstream convertChelates;
+		convertChelates << line;
+		ReadWriteFormats rwf_;
+		chelates = rwf_.readChelates(convertChelates);
+	}
 
 	string dum1;
 	vector<double> xInp, yInp, zInp;
@@ -413,7 +409,7 @@ std::vector<CoordXYZ> StereoisomerIdentifier::findShape(
 
 std::string StereoisomerIdentifier::findStereoisomer(
 	//input
-	const std::vector<CoordXYZ> &idealGeo,
+	std::vector<CoordXYZ> &idealGeo,//add types and chelates
 	const std::string &molecularFormula,
 	const int geoCode,
 	//CSD
@@ -453,9 +449,9 @@ std::string StereoisomerIdentifier::findStereoisomer(
 	string minimumLine;
 	while (getline(fileIsomers_, line))
 	{
-		if ((line == "G") || (line == "R") || (line == "S"))
+		if ((line[0] == 'G') || (line[0] == 'R') || (line[0] == 'S'))
 		{
-			letterType = line;
+			letterType = line[0];
 			stereoIndexLine = 0;
 			continue;
 		}
@@ -491,6 +487,38 @@ std::string StereoisomerIdentifier::findStereoisomer(
 		}
 	}
 	fileIsomers_.close();
+
+
+
+
+	// APAGAAAR DEPOIS DOS TESTESSSS
+	vector<int> permutationI(idealGeo.size());
+	stringstream convertLine;
+	convertLine << minimumLine;
+	for (size_t i = 0; i < idealTypes.size(); i++)
+		convertLine >> permutationI[i];
+	for (size_t k = 0; k < idealGeo.size(); k++)
+		idealGeo[k].atomlabel = setLabel(idealTypes[permutationI[k]]);
+	for (size_t i = 0; i < idealChelates.size(); i++)
+	{
+		for (size_t j = 0; j < idealChelates[i].size(); j++)
+			idealChelates[i][j] = findIndexByValue(permutationI, idealChelates[i][j]);
+	}
+	addChelate(idealGeo, idealChelates);
+
+	string idealFile = fileName + "-ideal.xyz";
+	string csdFile = fileName + "-csd.xyz";
+	printMol(
+		idealGeo,
+		idealChelates,
+		stereoLetter,
+		idealFile);
+	printMol(
+		coordMol,
+		chelates,
+		stereoLetter,
+		csdFile);
+
 	return minimumLine;
 }
 
@@ -533,9 +561,9 @@ string StereoisomerIdentifier::findStereoisomerMonoVersion(
 	while (!fileIsomers_.eof())
 	{
 		getline(fileIsomers_, line);
-		if (line == "G" || line == "R" || line == "S")
+		if (line[0] == 'G' || line[0] == 'R' || line[0] == 'S')
 		{
-			iStereoLetter = line;
+			iStereoLetter = line[0];
 			iLine = 0;
 			continue;
 		}
@@ -603,7 +631,8 @@ void StereoisomerIdentifier::printMol(
 {
 	//WATCH ATOM TYPES OF THE CHELATES POINTS
 	ofstream out_;
-	out_.open(fileName.c_str(), std::ofstream::out | std::ofstream::app);
+	//out_.open(fileName.c_str(), std::ofstream::out | std::ofstream::app);
+	out_.open(fileName.c_str());
 	double reescale = 2.0e0;
 	int countChel = 0;
 	for (size_t i = 0; i < chelates.size(); i++)
@@ -632,18 +661,17 @@ void StereoisomerIdentifier::printMol(
 				meanPoint.x = reescale * (mol[chel2].x - mol[chel1].x);
 				meanPoint.y = reescale * (mol[chel2].y - mol[chel1].y);
 				meanPoint.z = reescale * (mol[chel2].z - mol[chel1].z);
-				out_ << setLabel(11-i) << "  "
+				out_ << "H" << "  "
 					<< reescale * mol[chel1].x + meanPoint.x * 0.25e0 << "  "
 					<< reescale * mol[chel1].y + meanPoint.y * 0.25e0 << "  "
 					<< reescale * mol[chel1].z + meanPoint.z * 0.25e0 << endl;
-				out_ << setLabel(11 - i) << "  "
+				out_ << "H" << "  "
 					<< reescale * mol[chel1].x + meanPoint.x * 0.75e0 << "  "
 					<< reescale * mol[chel1].y + meanPoint.y * 0.75e0 << "  "
 					<< reescale * mol[chel1].z + meanPoint.z * 0.75e0 << endl;
 			}
 		}
 	}
-
 
 	out_.close();
 }

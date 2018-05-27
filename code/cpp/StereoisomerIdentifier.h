@@ -18,13 +18,15 @@ public:
 	StereoisomerIdentifier();
 	~StereoisomerIdentifier();
 
-	void identify(const std::string &fileName);
+	void identify(const std::string &fileName_in);
 
 	void identifyMonoVersion(const std::string &fileName);
 
 	void generateAllMol(std::string &fileName, int geoCode);
 
 private:
+	std::string fileName;
+
 	std::string setLabel(int i);
 
 	void reescaleMetalLigandDistancesToOne(std::vector<CoordXYZ> &coord);
@@ -50,7 +52,7 @@ private:
 
 	std::string findStereoisomer(
 		//input
-		const std::vector<CoordXYZ> &idealGeo,
+		std::vector<CoordXYZ> &idealGeo,//add types and chelates
 		const std::string &molecularFormula,
 		const int geoCode,
 		//CSD
