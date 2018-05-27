@@ -21,6 +21,22 @@ std::vector<double> Geometries::selectGeometry(
 {
 	switch (select)
 	{
+	case 20:
+		return geometry2L(mol0, cutAngle, reflectionOperation);
+		break;
+
+	case 30:
+		return geometry3TPY(mol0, cutAngle, reflectionOperation);
+		break;
+
+	case 31:
+		return geometry3TS(mol0, cutAngle, reflectionOperation);
+		break;
+
+	case 32:
+		return geometry3TP(mol0, cutAngle, reflectionOperation);
+		break;
+
 	case 40:
 		return geometry4Tetrahedron(mol0, cutAngle, reflectionOperation);
 		break;
@@ -582,6 +598,25 @@ string Geometries::sizeToGeometryCode(int geoCode)
 {
 	switch (geoCode)
 	{
+	case 20:
+		return "L-2";
+		break;
+
+	case 21:
+		return "A-2";
+
+	case 30:
+		return "TPY-3";
+		break;
+
+	case 31:
+		return "TS-3";
+		break;
+
+	case 32:
+		return "TP-3";
+		break;
+
 	case 40:
 		return "T-4";
 		break;
@@ -768,6 +803,25 @@ string Geometries::sizeToGeometryCodeLetter(int geoCode)
 {
 	switch (geoCode)
 	{
+	case 20:
+		return "L2";
+		break;
+
+	case 21:
+		return "A2";
+
+	case 30:
+		return "TPY3";
+		break;
+
+	case 31:
+		return "TS3";
+		break;
+
+	case 32:
+		return "TP3";
+		break;
+
 	case 40:
 		return "T4";
 		break;
@@ -957,6 +1011,19 @@ std::vector<int> Geometries::avaibleGeometries(int nCoordination)
 	vector<int> avaible;
 	switch (nCoordination)
 	{
+	case 2:
+		avaible.resize(1);
+		avaible[0] = 20;
+		break;
+
+	case 3:
+		avaible.resize(3);
+		avaible[0] = 30;
+		avaible[1] = 31;
+		avaible[2] = 32;
+		break;
+
+
 	case 4:
 		avaible.resize(4);
 		avaible[0] = 40;
@@ -1023,6 +1090,105 @@ std::vector<int> Geometries::avaibleGeometries(int nCoordination)
 
 
 }
+
+
+
+std::vector<double> Geometries::geometry2L(
+	std::vector<CoordXYZ> &mol0,
+	double & cutAngle,
+	std::vector<int> &reflectionOperation)
+{
+	int size = 2;
+	mol0.resize(size);
+	reflectionOperation.resize(size);
+	cutAngle = 2.0e0 * auxMath_._pi / 3.0e0;
+	vector<double> vectorRotations(4);
+
+	mol0[0].x = -1.000000;
+	mol0[0].y = 0.0e0;
+	mol0[0].z = 0.0e0;
+	mol0[1].x = 1.000000;
+	mol0[1].y = 0.0e0;
+	mol0[1].z = 0.0e0;
+
+	return vectorRotations;
+}
+
+
+std::vector<double> Geometries::geometry3TPY(
+	std::vector<CoordXYZ> &mol0,
+	double & cutAngle,
+	std::vector<int> &reflectionOperation)
+{
+	int size = 3;
+	mol0.resize(size);
+	reflectionOperation.resize(size);
+	cutAngle = 2.0e0 * auxMath_._pi / 3.0e0;
+	vector<double> vectorRotations(4);
+	mol0[0].x = -0.50000000;
+	mol0[0].y = 0.00000000;
+	mol0[0].z = 0.00000000;
+	mol0[1].x = 0.50000000;
+	mol0[1].y = 0.00000000;
+	mol0[1].z = 0.00000000;
+	mol0[2].x = 0.00000000;
+	mol0[2].y = 0.86602540;
+	mol0[2].z = 0.00000000;
+
+	return vectorRotations;
+}
+
+
+std::vector<double> Geometries::geometry3TS(
+	std::vector<CoordXYZ> &mol0,
+	double & cutAngle,
+	std::vector<int> &reflectionOperation)
+{
+	int size = 3;
+	mol0.resize(size);
+	reflectionOperation.resize(size);
+	cutAngle = 2.0e0 * auxMath_._pi / 3.0e0;
+	vector<double> vectorRotations(4);
+	mol0[0].x = 1.00000000;
+	mol0[0].y = 0.00000000;
+	mol0[0].z = 0.00000000;
+	mol0[1].x = -1.00000000;
+	mol0[1].y = 0.00000000;
+	mol0[1].z = 0.00000000;
+	mol0[2].x = 0.00000000;
+	mol0[2].y = 1.00000000;
+	mol0[2].z = 0.00000000;
+
+	return vectorRotations;
+}
+
+
+
+
+std::vector<double> Geometries::geometry3TP(
+	std::vector<CoordXYZ> &mol0,
+	double & cutAngle,
+	std::vector<int> &reflectionOperation)
+{
+	int size = 3;
+	mol0.resize(size);
+	reflectionOperation.resize(size);
+	cutAngle = 2.0e0 * auxMath_._pi / 3.0e0;
+	vector<double> vectorRotations(4);
+	mol0[0].x = -0.86602540;
+	mol0[0].y = 0.00000000;
+	mol0[0].z = 0.00000000;
+	mol0[1].x = 0.86602540;
+	mol0[1].y = 0.00000000;
+	mol0[1].z = 0.00000000;
+	mol0[2].x = 0.00000000;
+	mol0[2].y = 1.50000000;
+	mol0[2].z = 0.00000000;
+
+	return vectorRotations;
+}
+
+
 
 
 std::vector<double> Geometries::geometry4Tetrahedron(

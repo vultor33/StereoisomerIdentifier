@@ -35,6 +35,27 @@ public:
 	std::vector<int> avaibleGeometries(int nCoordination);
 
 private:
+
+	std::vector<double> geometry2L( //20
+		std::vector<CoordXYZ> &mol0,
+		double & cutAngle,
+		std::vector<int> &reflectionOperation);
+
+	std::vector<double> geometry3TPY( //30
+		std::vector<CoordXYZ> &mol0,
+		double & cutAngle,
+		std::vector<int> &reflectionOperation);
+
+	std::vector<double> geometry3TS( //31
+		std::vector<CoordXYZ> &mol0,
+		double & cutAngle,
+		std::vector<int> &reflectionOperation);
+
+	std::vector<double> geometry3TP( //32
+		std::vector<CoordXYZ> &mol0,
+		double & cutAngle,
+		std::vector<int> &reflectionOperation);
+
 	std::vector<double> geometry4Tetrahedron(
 		std::vector<CoordXYZ> &mol0,
 		double & cutAngle,
