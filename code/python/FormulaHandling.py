@@ -484,7 +484,9 @@ class FormulaHandling:
 
 	def calculateNewMapBetweenAtomsAndTypes(self, rank, chelatesList):
 		newMap = {}
-		rankCounting = Counter(rank)
+		sortedRank = list(rank)
+		sortedRank.sort()
+		rankCounting = Counter(sortedRank)
 		oldRankCounting = dict(rankCounting)
 		for i in range(len(oldRankCounting)):
 			maxKey = max(oldRankCounting.items(), key=operator.itemgetter(1))[0]

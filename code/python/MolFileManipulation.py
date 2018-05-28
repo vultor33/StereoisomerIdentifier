@@ -51,7 +51,7 @@ class Mol2ToMol:
 		if len(self.__metalsInMol2File) == 2:
 			metal1 = untilPoint(self.__listAtoms[self.__metalsInMol2File[0]].split()[5])
 			metal2 = untilPoint(self.__listAtoms[self.__metalsInMol2File[1]].split()[5])
-			if metal1 == metal2:
+			if metal1 == metal2 and self._checkIfIsConnected(self.__metalsInMol2File[0],self.__metalsInMol2File[1]):
 				outputFile_.write("Dimetal;")
 			else:
 				outputFile_.write("Mix;")
@@ -64,7 +64,7 @@ class Mol2ToMol:
 			try:
 				outputFile_.write(self.__listAtoms[iMetal].split()[1] + ";")
 		
-				info = self._writeCppInput(int(iMetal) + 1)
+				info = self._writeCppInput(int(float(iMetal)) + 1)
 				if info[0] == 1:
 					outputFile_.write(info[1] + ";" + info[2] + "-L-1;0;")
 				else:
@@ -77,6 +77,8 @@ class Mol2ToMol:
 						outputFile_.write(info[1] + ";E.RMSD;" + cppStream_[2] + ";")
 					else:
 						outputFile_.write(info[1] + ";" + info[2] + "-" + cppStream_[1] + ";" + cppStream_[2] + ";")
+						
+				exit()
 			
 			except Exception as e:
 				if str(e) == "Metal number error - 0 metals":
@@ -129,9 +131,6 @@ class Mol2ToMol:
 		ligandsBondedToMetal  = []
 		self._findChelations(iMetal, iChelates, ligandsBondedToMetal)
 
-#		print(iMetal)
-#		print(ligandsBondedToMetal)
-
 		if len(ligandsBondedToMetal) > 8:
 			raise Exception("Number of ligands error")
 
@@ -146,12 +145,12 @@ class Mol2ToMol:
 		for i in ligandsBondedToMetal:
 			atomsColumns = self.__listAtoms[i-1].split()
 			rankL.append(self.__equivalenceRank[i-1])
+			
 		objF = FormulaHandling()
 		objF.generateMolecularFormula(rankL,iChelates)
 		objFenum = FormulaHandling()
 		objFenum.generateEnumerationFormula(rankL,iChelates)
 		rankToTypesMap = objF.calculateNewMapBetweenAtomsAndTypes(rankL,iChelates)
-
 		cppInput = open(self.__fileMol2Name + "-cpp.inp", "w")
 
 		if objF.getFormula() == objFenum.getFormula():
@@ -190,7 +189,14 @@ class Mol2ToMol:
 		returnInfo.append(objF.getFormula())
 		returnInfo.append(objFenum.getFormula())
 		return returnInfo
+
+	def _checkIfIsConnected(self, atom1, atom2):		
+		graph = {}
+		for i in range(len(self.__listAtoms)):
+			graph[i+1] = self._getAtomBonds(i+1)
 		
+		pathToJ = self._findAnyGraphPath(graph, int(float(atom1)) + 1, int(float(atom2)) + 1)
+		return not pathToJ is None
 
 
 	def _findChelations(self, iMetal, iChelates, ligandsBondedToMetal):

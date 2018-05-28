@@ -505,7 +505,7 @@ std::string StereoisomerIdentifier::findStereoisomer(
 	if (minimumRmsd == -1.0e0)
 		return minimumLine;
 
-	// APAGAAAR DEPOIS DOS TESTESSSS
+	/* USE FOR TESTS
 	vector<int> permutationI(idealGeo.size());
 	stringstream convertLine;
 	convertLine << minimumLine;
@@ -532,6 +532,7 @@ std::string StereoisomerIdentifier::findStereoisomer(
 		chelates,
 		stereoLetter,
 		csdFile);
+	*/
 
 	return minimumLine;
 }
