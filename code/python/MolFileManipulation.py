@@ -22,6 +22,7 @@ class Mol2ToMol:
 		self.__metalsInMol2File = []
 		self.__fileMol2Name = ""
 		self.__equivalenceRank = []
+		self.__graphFindTries = 0
 
 
 		self.__fileMol2Name, fileExtension = os.path.splitext(fileMol2Name)
@@ -51,7 +52,13 @@ class Mol2ToMol:
 		if len(self.__metalsInMol2File) == 2:
 			metal1 = untilPoint(self.__listAtoms[self.__metalsInMol2File[0]].split()[5])
 			metal2 = untilPoint(self.__listAtoms[self.__metalsInMol2File[1]].split()[5])
-			if metal1 == metal2 and self._checkIfIsConnected(self.__metalsInMol2File[0],self.__metalsInMol2File[1]):
+			metalConnected = False
+			try:
+				metalConnected = self._checkIfIsConnected(self.__metalsInMol2File[0],self.__metalsInMol2File[1])
+			except Exception as e:
+				metalConnected = False
+			
+			if metal1 == metal2 and metalConnected:
 				outputFile_.write("Dimetal;")
 			else:
 				outputFile_.write("Mix;")
@@ -86,6 +93,8 @@ class Mol2ToMol:
 					outputFile_.write("E.NL>8;;;")
 				elif str(e) == "chelations not well defined":
 					outputFile_.write("E.Formula;;;")
+				elif str(e) == "path error":
+					outputFile_.write("E.Graph;;;")
 				else:
 					outputFile_.write("E.{};;;".format(str(e)))
 					
@@ -199,6 +208,7 @@ class Mol2ToMol:
 		for i in range(len(self.__listAtoms)):
 			graph[i+1] = self._getAtomBonds(i+1)
 		
+		self.__graphFindTries = 0
 		pathToJ = self._findAnyGraphPath(graph, int(float(atom1)) + 1, int(float(atom2)) + 1)
 		return not pathToJ is None
 
@@ -228,6 +238,7 @@ class Mol2ToMol:
 			j = i + 1
 			auxChelates = [i]
 			while j < len(ligandsBondedToMetal):
+				self.__graphFindTries = 0
 				pathToJ = self._findAnyGraphPath(graph, ligandsBondedToMetal[i], ligandsBondedToMetal[j])
 				if not pathToJ is None:
 					auxChelates.append(j)
@@ -241,11 +252,15 @@ class Mol2ToMol:
 		
 	
 	def _findAnyGraphPath(self, graph, start, end, path=[]):
+		self.__graphFindTries +=1
+		if self.__graphFindTries > 100000:
+			raise Exception("path error")
+
 		path = path + [start]
 		if start == end:
 			return path
 		if not start in graph:
-			return None
+			return None			
 		for node in graph[start]:
 			if node not in path:
 				newpath = self._findAnyGraphPath(graph, node, end, path)
