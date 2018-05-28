@@ -87,7 +87,7 @@ void StereoisomerIdentifier::identify(const string &fileName_in)
 		steroisomerIndex,
 		stereoLetter);
 
-	if (rmsd = -1.0e0)
+	if (rmsd == -1.0e0)
 	{
 		cppOut_ << fileName << endl
 			<< "rmsdfailed" << endl

@@ -36,7 +36,7 @@ else:
 	calculating.write("CSD;Info;Metal;Formula;ID;RMSD")
 
 	for mol2 in allMol2Files:
-		if mol2 != "ABAWOP.search1.mol2":
+		if mol2 != "ABACRE.search1.mol2":
 			continue
 		calculating.write("\n{:<9};".format(mol2.partition(".")[0]))
 		try:
