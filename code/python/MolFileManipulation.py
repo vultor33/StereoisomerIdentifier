@@ -73,6 +73,8 @@ class Mol2ToMol:
 					cppStream_ = cppOutput_.read().splitlines()
 					if cppStream_[1] == "failed":
 						outputFile_.write(info[1] + ";" + info[2] + "-E.Polyedron;" + cppStream_[2] + ";")
+					elif cppStream_[1] == "rmsdfailed":
+						outputFile_.write(info[1] + ";E.RMSD;" + cppStream_[2] + ";")
 					else:
 						outputFile_.write(info[1] + ";" + info[2] + "-" + cppStream_[1] + ";" + cppStream_[2] + ";")
 			

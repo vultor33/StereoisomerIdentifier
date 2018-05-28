@@ -152,8 +152,8 @@ double MarquesEnantiomers::assignStruct(
 			}
 		}
 	}
-	cout << "WARNING - MARQUESRMSD DIDN'T CONVERGED" << endl;
-	return rmsdmin;
+	//cout << "WARNING - MARQUESRMSD DIDN'T CONVERGED" << endl;
+	return -1.0e0;
 }
 
 vector<CoordXYZ> MarquesEnantiomers::readXyz(string xyzName)

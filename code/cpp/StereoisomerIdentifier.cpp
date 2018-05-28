@@ -87,9 +87,18 @@ void StereoisomerIdentifier::identify(const string &fileName_in)
 		steroisomerIndex,
 		stereoLetter);
 
-	cppOut_ << fileName << endl
-		<< geo_.sizeToGeometryCode(geoCode) << "-" << stereoLetter << "-" << steroisomerIndex << endl
-		<< rmsd << endl;
+	if (rmsd = -1.0e0)
+	{
+		cppOut_ << fileName << endl
+			<< "rmsdfailed" << endl
+			<< rmsd << endl;
+	}
+	else
+	{
+		cppOut_ << fileName << endl
+			<< geo_.sizeToGeometryCode(geoCode) << "-" << stereoLetter << "-" << steroisomerIndex << endl
+			<< rmsd << endl;
+	}
 	cppOut_.close();
 }
 
@@ -477,6 +486,11 @@ std::string StereoisomerIdentifier::findStereoisomer(
 		addChelate(molI, chelPermuted);
 
 		auxRmsd = mqRmsd_.marquesRmsdEqualMass(outGeometry, molI);
+		if (auxRmsd == -1.0e0)
+		{
+			minimumRmsd = -1.0e0;
+			break;
+		}
 
 		if (auxRmsd < minimumRmsd)
 		{
@@ -488,8 +502,8 @@ std::string StereoisomerIdentifier::findStereoisomer(
 	}
 	fileIsomers_.close();
 
-
-
+	if (minimumRmsd == -1.0e0)
+		return minimumLine;
 
 	// APAGAAAR DEPOIS DOS TESTESSSS
 	vector<int> permutationI(idealGeo.size());
