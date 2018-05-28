@@ -3,6 +3,7 @@ import glob
 from rdkit import Chem
 from MolFileManipulation import Mol2ToMol
 
+
 flagOnlyOne = False
 
 if flagOnlyOne:
@@ -31,29 +32,38 @@ if flagOnlyOne:
 else:
 
 	allMol2Files = glob.glob("*.mol2")
-	calculating = open("calculating.txt", "w")
+	calculating = open("calculating.csv", "w")
+	calculating.write("CSD;Info;Metal;Formula;ID;RMSD")
 
 	for mol2 in allMol2Files:
-		calculating.write("\nCalculating:  {:>20}  :;".format(mol2))
+		if mol2 != "ABAWOP.search1.mol2":
+			continue
+		calculating.write("\n{:<9};".format(mol2.partition(".")[0]))
 		try:
 			obj1 = Mol2ToMol(mol2)
 			obj1.runStereoisomerIdentifierRmsd(calculating)
 			
 		except Exception as e:
 			if str(e) == "Chem.MolFromMol2File failed":
-				calculating.write(";rdkit coldn't read mol2 file")
+				calculating.write("E.rdkit")
 			elif str(e) == "Metal number error - 0 metals":
-				calculating.write(";Couldn't find any metal at .mol2 file")
-			elif str(e) == "Metal number error - more than one":
-				calculating.write(";More than one metal at .mol2 file")
-			elif str(e) == "Number of ligands error":
-				calculating.write(";Number of ligands need to be between 1 and 8")
-			elif str(e) == "chelations not well defined":
-				calculating.write(";Error on defining formula")
+				calculating.write("E.0Metals")
 			else:
-				calculating.write(";Error:  {}\n".format(str(e)))
+				calculating.write("E.{}".format(str(e)))
 	
 	calculating.close()
+
+
+
+#READING AND ANALYZING RESULTS
+#import csv
+#with open('calculating.csv', 'r') as csvfile:
+#	spamreader = csv.reader(csvfile, delimiter=';', quotechar='|')
+#	for row in spamreader:
+#		if len(row) > 3:
+#			print(row[4].split('-'))
+#exit()
+
 
 
 #REMOVER:
