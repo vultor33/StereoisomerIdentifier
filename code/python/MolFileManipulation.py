@@ -58,8 +58,6 @@ class Mol2ToMol:
 		else:
 			outputFile_.write("Mix;")
 			
-
-
 		for iMetal in self.__metalsInMol2File:
 			try:
 				outputFile_.write(self.__listAtoms[iMetal].split()[1] + ";")
@@ -71,14 +69,13 @@ class Mol2ToMol:
 					subprocess.call("StereoisomerIdentifierRmsd.exe " + self.__fileMol2Name + "-cpp.inp", shell=True)
 					cppOutput_ = open(self.__fileMol2Name + "-cpp.inp.log","r")
 					cppStream_ = cppOutput_.read().splitlines()
+					cppOutput_.close()
 					if cppStream_[1] == "failed":
 						outputFile_.write(info[1] + ";" + info[2] + "-E.Polyedron;" + cppStream_[2] + ";")
 					elif cppStream_[1] == "rmsdfailed":
 						outputFile_.write(info[1] + ";E.RMSD;" + cppStream_[2] + ";")
 					else:
 						outputFile_.write(info[1] + ";" + info[2] + "-" + cppStream_[1] + ";" + cppStream_[2] + ";")
-						
-				exit()
 			
 			except Exception as e:
 				if str(e) == "Metal number error - 0 metals":
@@ -91,6 +88,13 @@ class Mol2ToMol:
 					outputFile_.write("E.Formula;;;")
 				else:
 					outputFile_.write("E.{};;;".format(str(e)))
+					
+		fileLog = self.__fileMol2Name + "-cpp.inp.log"
+		fileInp = self.__fileMol2Name + "-cpp.inp"
+		if os.path.isfile(fileLog):
+			os.remove(fileLog)
+		if os.path.isfile(fileInp):
+			os.remove(fileInp)
 
 
 
