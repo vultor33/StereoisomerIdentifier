@@ -1,4 +1,5 @@
 import os
+import ntpath
 import subprocess
 from rdkit import Chem
 from collections import Counter
@@ -26,6 +27,7 @@ class Mol2ToMol:
 
 
 		self.__fileMol2Name, fileExtension = os.path.splitext(fileMol2Name)
+		self.__fileMol2Name = ntpath.basename(self.__fileMol2Name)
 		if not fileExtension == '.mol2':
 			return
 
@@ -36,7 +38,7 @@ class Mol2ToMol:
 		mol2Input.close()
 
 		#Canonicalizing
-		mol = Chem.MolFromMol2File(self.__fileMol2Name + '.mol2', removeHs = False)
+		mol = Chem.MolFromMol2File(fileMol2Name, removeHs = False)
 		if mol is None:
 			raise Exception('Chem.MolFromMol2File failed')
 		self.__equivalenceRank = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
@@ -87,6 +89,8 @@ class Mol2ToMol:
 			except Exception as e:
 				if str(e) == "Metal number error - 0 metals":
 					outputFile_.write("E.NoMetal;;;")
+				elif str(e) == "No ligands":
+					outputFile_.write("E.NoLigands;;;")
 				elif str(e) == "Metal number error - more than one":
 					outputFile_.write("E.ManyMetals;;;")
 				elif str(e) == "Number of ligands error":
@@ -148,6 +152,8 @@ class Mol2ToMol:
 			raise Exception("Number of ligands error")
 
 		returnInfo = []
+		if len(ligandsBondedToMetal) == 0:
+			raise Exception("No ligands")
 		if len(ligandsBondedToMetal) == 1:
 			returnInfo.append(1)
 			returnInfo.append('a')
@@ -164,6 +170,7 @@ class Mol2ToMol:
 		objFenum = FormulaHandling()
 		objFenum.generateEnumerationFormula(rankL,iChelates)
 		rankToTypesMap = objF.calculateNewMapBetweenAtomsAndTypes(rankL,iChelates)
+
 		cppInput = open(self.__fileMol2Name + "-cpp.inp", "w")
 
 		if objF.getFormula() == objFenum.getFormula():
