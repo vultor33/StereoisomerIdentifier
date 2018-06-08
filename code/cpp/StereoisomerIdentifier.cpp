@@ -87,11 +87,11 @@ void StereoisomerIdentifier::identify(const string &fileName_in)
 		steroisomerIndex,
 		stereoLetter);
 
-	if (rmsd == -1.0e0)
+	if (isomerLine == "")
 	{
 		cppOut_ << fileName << endl
 			<< "rmsdfailed" << endl
-			<< rmsd << endl;
+			<< -1 << endl;
 	}
 	else
 	{
@@ -488,8 +488,9 @@ std::string StereoisomerIdentifier::findStereoisomer(
 		auxRmsd = mqRmsd_.marquesRmsdEqualMass(outGeometry, molI);
 		if (auxRmsd == -1.0e0)
 		{
-			minimumRmsd = -1.0e0;
-			break;
+			continue;
+			//minimumRmsd = -1.0e0;
+			//break;
 		}
 
 		if (auxRmsd < minimumRmsd)
@@ -502,7 +503,11 @@ std::string StereoisomerIdentifier::findStereoisomer(
 	}
 	fileIsomers_.close();
 
+
+
 	if (minimumRmsd == -1.0e0)
+		return "";
+	else
 		return minimumLine;
 
 	/* USE FOR TESTS
@@ -533,8 +538,6 @@ std::string StereoisomerIdentifier::findStereoisomer(
 		stereoLetter,
 		csdFile);
 	*/
-
-	return minimumLine;
 }
 
 

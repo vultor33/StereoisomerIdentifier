@@ -12,7 +12,7 @@ calculating = open("calculating.csv", "w")
 calculating.write("CSD;Info;Metal;Formula;ID;RMSD")
 
 for mol2 in allMol2Files:
-	if ntpath.basename(mol2) != "EGALUV.search1.mol2":
+	if ntpath.basename(mol2) != "UHUPAO.search1.mol2":
 		continue
 	calculating.write("\n{:<9};".format(mol2.partition(".")[0]))
 	try:
