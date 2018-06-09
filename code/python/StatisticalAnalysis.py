@@ -139,7 +139,6 @@ class StatisticalAnalysis:
 				letter,self.__allGeo.index(stereoID[1] + '-' + stereoID[2]),
 				self.__allPossibleChel.index(chelN))
 		
-			#print(metal,' ',nCoord,' ',letter,' ',self.__allGeo.index(stereoID[1] + '-' + stereoID[2]),' ',c)
 			i+=1
 	
 

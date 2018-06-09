@@ -11,14 +11,6 @@ pra rodar:
 ipython pca.py
 
 
-
-
-
-
-
-
-
-
 TRATAMENTO DOS DADOS
 dividi tudo pela quantidade de atomos
 
