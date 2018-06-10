@@ -26,14 +26,16 @@ class StatisticalAnalysis:
 		metMaxCode = ''
 		mixl = 0
 		ntotalMix = 0
-	
+
+
+		kTl = 0	
 		with open(self._fileName, 'r') as csvfile:
 			spamreader = csv.reader(csvfile, delimiter=';', quotechar='|')
 			for auxRow in spamreader:
 				row = auxRow[0:auxRow.index('')]
 				if row[0] == 'CSD':
 					continue
-			
+
 				cont = False
 				for elem in row:
 					if "E." in elem:
@@ -100,14 +102,14 @@ class StatisticalAnalysis:
 		#print(nmetalsmax)
 		#print(metMaxCode)
 		#ERRORS
-		#print("rdk:  ",erdk)
-		#print("enl:  ",enl)
-		#print("grap:  ",egrap)
-		#print("efor:  ",efor)
-		#print("emet:  ",e0met)
-		#print("enol:  ",enol)
-		#print("epol:   ",epol)
-		#print("soma:  ",erdk + enl + egrap + efor + e0met + enol + epol)
+		print("rdk:  ",erdk)
+		print("enl:  ",enl)
+		print("grap:  ",egrap)
+		print("efor:  ",efor)
+		print("emet:  ",e0met)
+		print("enol:  ",enol)
+		print("epol:   ",epol)
+		print("soma:  ",erdk + enl + egrap + efor + e0met + enol + epol)
 
 
 
@@ -197,6 +199,14 @@ class StatisticalAnalysis:
 					allChel.append(nChelates)
 		print(allChel)
 	
+	def _rowToCsvString(self,row):
+		strOut = ''
+		for elem in row:
+			strOut += elem + ';'
+		return strOut
+	
+	
+	
 
 	#one letter metals must come last
 	__allMetals = ["Sc","Ti","Cr","Mn","Fe","Co","Ni","Cu","Zn",
@@ -205,7 +215,7 @@ class StatisticalAnalysis:
 		"Hf","Ta","Re","Os","Ir","Pt","Au","Hg",
 		"Ac","Th","Pa","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr",
 		"Rf","Db","Sg","Bh","Hs","Mt","Ds","Rg","Uub",
-		"Al","Ga","Ge","In","Sn","Sb","Ti","Pb","Bi","Po",
+		"Al","Ga","Ge","In","Sn","Sb","Tl","Pb","Bi","Po",
 		"V","Y","W","U"]
 	__allPossibleChel = [[], [2], [3], [4], [2, 2], [5], [2, 3], [6], [3, 3], [2, 2, 2], [2, 4], [7], [2, 5], [3, 4], [2, 2, 3], [8], [4, 4], [2, 2, 2, 2], [2, 6], [2, 3, 3], [3, 5], [2, 2, 4]]
 	__allGeo = ["L-1",

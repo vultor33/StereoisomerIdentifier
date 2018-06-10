@@ -6,7 +6,7 @@ from sklearn.preprocessing import StandardScaler
 import plotly.plotly as py
 import plotly.tools as tls
 
-df = pd.read_csv('metal-statistics.csv',parse_dates=True,sep=r';')
+df = pd.read_csv('csvMetalStatistics.csv',parse_dates=True,sep=r';')
 #df.drop(df.index[[46]],inplace=True) #drop if needed
 
 feature = df.columns.values
@@ -41,7 +41,7 @@ plot.scatter(p1, p2, s=4000, c=color, alpha=0.5)
 
 for i, txt in enumerate(labels):
 	if i == 0:#Ag
-		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.4,p2[i]-0.4),size=40)
+		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.6,p2[i]-0.4),size=40)
 	if i == 2:#Au
 		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i],p2[i]-0.4),size=40)
 	if i == 8:#Cu
@@ -53,18 +53,20 @@ for i, txt in enumerate(labels):
 	if i == 27:#Ni
 		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.4,p2[i]-0.4),size=40)
 	if i == 29:#Pb
-		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.4,p2[i]-0.4),size=40)
+		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.3,p2[i]-0.4),size=40)
 	if i == 30:#Pd
-		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-1.0,p2[i]-0.4),size=40)
+		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.9,p2[i]-0.4),size=40)
 	if i == 32:#Pt
 		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.4,p2[i]-0.4),size=40)
 	if i == 37:#Sc
 		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.4,p2[i]-0.4),size=40)
-	if i == 45:#U
+	if i == 45:#Tl
+		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.3,p2[i]-0.4),size=40)
+	if i == 46:#U
 		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.2,p2[i]-0.5),size=40)
-	if i == 46:#V
+	if i == 47:#V
 		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.2,p2[i]-0.5),size=40)
-	if i == 48:#Y
+	if i == 49:#Y
 		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.15,p2[i]-0.4),size=40)
 
 plt.show()
