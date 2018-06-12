@@ -26,6 +26,16 @@ class StatisticalAnalysis:
 		metMaxCode = ''
 		mixl = 0
 		ntotalMix = 0
+		
+		dimDiffFormula = 0
+		dimDiffPoly = 0
+		
+		isoDiff = 0
+		isoG = 0
+		isoRR = 0
+		isoRS = 0
+		
+		
 
 
 		kTl = 0	
@@ -69,20 +79,29 @@ class StatisticalAnalysis:
 						metMaxCode = row[0]
 				
 			
-				if len(row) > 3:
-					if row[1] == 'Dimetal':
-						stereoID1 = row[4].split('-')
-						stereoID2 = row[8].split('-')
-						if len(stereoID1) > 4 and len(stereoID2) > 4:
-							k +=1
-							if stereoID1[0] == stereoID2[0]:
-								l+=1
-								#print('1:  ',stereoID1[4], '  2:  ',stereoID2[4])
-								#print('1:  ',stereoID1[3], '  2:  ',stereoID2[3])
+				if row[1] == 'Dimetal':
+					stereoID1 = row[4].split('-')
+					stereoID2 = row[8].split('-')
+					if stereoID1[0] != stereoID2[0]:
+						dimDiffFormula += 1
+					elif (stereoID1[1]+stereoID1[2]) != (stereoID2[1]+stereoID2[2]):
+						dimDiffPoly += 1
+						
+					else:
+						if len(stereoID1) == 3:
+							isoG += 1
+						elif stereoID1[4] != stereoID2[4]:
+							isoDiff +=1
+						elif stereoID1[3] == stereoID2[3]:
+							if stereoID1[3] == 'G':
+								isoG += 1
 							else:
-								continue
-								#print(row)
-		
+								isoRR +=1
+						elif stereoID1[3] == 'G' or stereoID2[3] == 'G':
+							isoDiff +=1
+						else:
+							isoRS +=1
+				
 	
 	
 		print('mix:  ',mixl)
@@ -110,6 +129,14 @@ class StatisticalAnalysis:
 		print("enol:  ",enol)
 		print("epol:   ",epol)
 		print("soma:  ",erdk + enl + egrap + efor + e0met + enol + epol)
+
+		print('DIMETALS')
+		print('diff formula:  ',dimDiffFormula)
+		print('diff poly:  ',dimDiffPoly)
+		print('diff iso:  ',isoDiff)
+		print('2 G:  ',isoG)
+		print('RR or SS: ',isoRR)
+		print('RS:  ',isoRS)
 
 
 

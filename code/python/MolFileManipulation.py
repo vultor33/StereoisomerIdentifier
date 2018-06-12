@@ -41,7 +41,9 @@ class Mol2ToMol:
 		mol = Chem.MolFromMol2File(fileMol2Name, removeHs = False)
 		if mol is None:
 			raise Exception('Chem.MolFromMol2File failed')
-		self.__equivalenceRank = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
+		#self.__equivalenceRank = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
+		Chem.AssignStereochemistry(mol, flagPossibleStereoCenters=True)
+		self.__equivalenceRank = [int(a.GetProp('_CIPRank')) for a in mol.GetAtoms()]
 		
 
 	def printInfo(self):
