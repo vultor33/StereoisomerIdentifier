@@ -97,6 +97,7 @@ class StatisticalAnalysis:
 								isoG += 1
 							else:
 								isoRR +=1
+								self.fileCodes.write(row[0] + "\n")
 						elif stereoID1[3] == 'G' or stereoID2[3] == 'G':
 							isoDiff +=1
 						else:

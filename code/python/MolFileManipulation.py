@@ -37,13 +37,18 @@ class Mol2ToMol:
 		self._extractMol2Info()
 		mol2Input.close()
 
+		self._writeMolFile()
+
 		#Canonicalizing
-		mol = Chem.MolFromMol2File(fileMol2Name, removeHs = False)
+		#mol = Chem.MolFromMol2File(fileMol2Name, removeHs = False)
+		mol = Chem.MolFromMolFile(self.__fileMol2Name + '.mol', removeHs = False)
+		if os.path.isfile(self.__fileMol2Name + '.mol'):
+			os.remove(self.__fileMol2Name + '.mol')
 		if mol is None:
 			raise Exception('Chem.MolFromMol2File failed')
-		#self.__equivalenceRank = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
-		Chem.AssignStereochemistry(mol, flagPossibleStereoCenters=True)
-		self.__equivalenceRank = [int(a.GetProp('_CIPRank')) for a in mol.GetAtoms()]
+		self.__equivalenceRank = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
+		#Chem.AssignStereochemistry(mol, flagPossibleStereoCenters=True)
+		#self.__equivalenceRank = [int(a.GetProp('_CIPRank')) for a in mol.GetAtoms()]
 		
 
 	def printInfo(self):
@@ -87,7 +92,8 @@ class Mol2ToMol:
 						outputFile_.write(info[1] + ";E.RMSD;" + cppStream_[2] + ";")
 					else:
 						outputFile_.write(info[1] + ";" + info[2] + "-" + cppStream_[1] + ";" + cppStream_[2] + ";")
-			
+		
+		
 			except Exception as e:
 				if str(e) == "Metal number error - 0 metals":
 					outputFile_.write("E.NoMetal;;;")
@@ -103,7 +109,7 @@ class Mol2ToMol:
 					outputFile_.write("E.Graph;;;")
 				else:
 					outputFile_.write("E.{};;;".format(str(e)))
-					
+		
 		fileLog = self.__fileMol2Name + "-cpp.inp.log"
 		fileInp = self.__fileMol2Name + "-cpp.inp"
 		if os.path.isfile(fileLog):
@@ -166,7 +172,9 @@ class Mol2ToMol:
 		for i in ligandsBondedToMetal:
 			atomsColumns = self.__listAtoms[i-1].split()
 			rankL.append(self.__equivalenceRank[i-1])
-			
+
+		
+		
 		objF = FormulaHandling()
 		objF.generateMolecularFormula(rankL,iChelates)
 		objFenum = FormulaHandling()
@@ -295,30 +303,25 @@ class Mol2ToMol:
 
 	# DEACTIVATED - loading mol2 file
 	def _writeMolFile(self):
-		raise Exception("_writeMolFile deactivated")
+		linesWithMetalBonds = []
+		for iMetal in self.__metalsInMol2File:
+			for i in range(len(self.__listBonds)):
+				auxB1 = int(self.__listBonds[i].split()[1])
+				auxB2 = int(self.__listBonds[i].split()[2])
+				if auxB1 == iMetal+1:
+					if not i in linesWithMetalBonds:
+						linesWithMetalBonds.append(i)
+				if auxB2 == iMetal+1:
+					if not i in linesWithMetalBonds:
+						linesWithMetalBonds.append(i)
 
-		# This function need the following rules
-		#self.__iMetal = metalsInMol2File[0] + 1
-		#i = 0
-		#while i < len(self.__listBonds):
-		#	auxB1 = int(self.__listBonds[i].split()[1])
-		#	auxB2 = int(self.__listBonds[i].split()[2])
-		#	if auxB1 == self.__iMetal:
-		#		self.__ligandBondedToMetal.append(auxB2)		
-		#		self.__metalBondsLines.append(i)
-		#	if auxB2 == self.__iMetal:
-		#		self.__ligandBondedToMetal.append(auxB1)
-		#		self.__metalBondsLines.append(i)
-		#	i+=1
-	
-	
 		molFile = open(self.__fileMol2Name + ".mol", "w")
 		molFile.write(self.__molName)
 		molFile.write("\n")
 		molFile.write("StereoisomerIdentifier\n\n")
 		molFile.write("{:>3}{:>3}".format(
 		str(len(self.__listAtoms)),
-		str(len(self.__listBonds) - len(self.__metalBondsLines))))
+		str(len(self.__listBonds) - len(linesWithMetalBonds)))) # remove all metal bonds
 		molFile.write("  0     0  0  0  0  0  0999 V2000")
 		molFile.write("\n")
 		i = 0
@@ -336,7 +339,7 @@ class Mol2ToMol:
 		
 		i = 0
 		while i < len(self.__listBonds):
-			if i in self.__metalBondsLines:
+			if i in linesWithMetalBonds:
 				i+=1
 				continue
 			listBondsColumns = self.__listBonds[i].split()
