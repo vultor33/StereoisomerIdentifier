@@ -42,9 +42,15 @@ class StatisticalAnalysis:
 		with open(self._fileName, 'r') as csvfile:
 			spamreader = csv.reader(csvfile, delimiter=';', quotechar='|')
 			for auxRow in spamreader:
-				row = auxRow[0:auxRow.index('')]
+				try:
+					finalIndex = auxRow.index('')
+					row = auxRow[0:finalIndex]
+				except Exception as e:
+					row = auxRow
+
 				if row[0] == 'CSD':
 					continue
+
 
 				cont = False
 				for elem in row:

@@ -5,16 +5,23 @@ from rdkit import Chem
 from MolFileManipulation import Mol2ToMol
 
 
-#allMol2Files = glob.glob("G:\\!CSD-database\\*.mol2")
-#calcFiles = allMol2Files[43784:87567] - cutting
+#CALCULATE WITH LIST
+#calcFilesTemp = [
+#"BEHSIQ"
+#]
+#calcFiles = []
+#for file in calcFilesTemp:
+#	calcFiles.append("G:\\!CSD-database\\"+file+".search1.mol2")
 
-allMol2Files = ["ATIWIK.mol2"]
+allMol2Files = glob.glob("G:\\!CSD-database\\*.mol2")
+calcFiles = allMol2Files[0:43783]
+del allMol2Files
 
 calculating = open("calculating.csv", "w")
 calculating.write("CSD;Info;Metal;Formula;ID;RMSD")
 
-for mol2 in allMol2Files:
-#	if ntpath.basename(mol2) != "ECUVEE.search1.mol2":
+for mol2 in calcFiles:
+#	if ntpath.basename(mol2) != "EGALUV.search1.mol2":
 #		continue
 	calculating.write("\n{:<9};".format(mol2.partition(".")[0]))
 	try:

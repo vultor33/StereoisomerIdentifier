@@ -1,6 +1,6 @@
 from StatisticalAnalysis import StatisticalAnalysis
 
 print('started')
-obj = StatisticalAnalysis('calculating.csv')
+obj = StatisticalAnalysis('RESULTADOS-metal-bonds-removed.csv')
 obj.analyze()
 print('finished')

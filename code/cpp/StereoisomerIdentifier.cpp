@@ -448,7 +448,7 @@ std::string StereoisomerIdentifier::findStereoisomer(
 		idealTypes,
 		idealChelates);
 
-	addChelate(coordMol, chelates);
+	addChelate(coordMol, chelates); //add dummy atoms to coordMol
 
 	int stereoIndexLine = 0;
 	double minimumRmsd = 1.0e99;
@@ -504,13 +504,7 @@ std::string StereoisomerIdentifier::findStereoisomer(
 	fileIsomers_.close();
 
 
-
-	if (minimumRmsd == -1.0e0)
-		return "";
-	else
-		return minimumLine;
-
-	/* USE FOR TESTS
+	/* USE FOR TESTS */
 	vector<int> permutationI(idealGeo.size());
 	stringstream convertLine;
 	convertLine << minimumLine;
@@ -537,7 +531,14 @@ std::string StereoisomerIdentifier::findStereoisomer(
 		chelates,
 		stereoLetter,
 		csdFile);
-	*/
+	
+
+	if (minimumRmsd == -1.0e0)
+		return "";
+	else
+		return minimumLine;
+
+
 }
 
 

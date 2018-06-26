@@ -24,6 +24,7 @@ class Mol2ToMol:
 		self.__fileMol2Name = ""
 		self.__equivalenceRank = []
 		self.__graphFindTries = 0
+		self.__keepIdentifierFiles = False
 
 
 		self.__fileMol2Name, fileExtension = os.path.splitext(fileMol2Name)
@@ -46,10 +47,12 @@ class Mol2ToMol:
 			os.remove(self.__fileMol2Name + '.mol')
 		if mol is None:
 			raise Exception('Chem.MolFromMol2File failed')
-		self.__equivalenceRank = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
-		#Chem.AssignStereochemistry(mol, flagPossibleStereoCenters=True)
-		#self.__equivalenceRank = [int(a.GetProp('_CIPRank')) for a in mol.GetAtoms()]
+		#self.__equivalenceRank = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
+		Chem.AssignStereochemistry(mol, flagPossibleStereoCenters=True)
+		self.__equivalenceRank = [int(a.GetProp('_CIPRank')) for a in mol.GetAtoms()]
 		
+	def keepIdentifierFiles(self):
+		self.__keepIdentifierFiles = True
 
 	def printInfo(self):
 		print("molName: ",self.__molName)
@@ -58,6 +61,8 @@ class Mol2ToMol:
 		print("metal bond lines: ",self.__metalBondsLines)
 
 	def runStereoisomerIdentifierRmsd(self, outputFile_):
+		
+		# Check if it is bimetallic
 		if len(self.__metalsInMol2File) == 2:
 			metal1 = untilPoint(self.__listAtoms[self.__metalsInMol2File[0]].split()[5])
 			metal2 = untilPoint(self.__listAtoms[self.__metalsInMol2File[1]].split()[5])
@@ -73,12 +78,13 @@ class Mol2ToMol:
 				outputFile_.write("Mix;")
 		else:
 			outputFile_.write("Mix;")
-			
+
+		# Evaluate the stereoisomer of each metal
 		for iMetal in self.__metalsInMol2File:
 			try:
 				outputFile_.write(self.__listAtoms[iMetal].split()[1] + ";")
 		
-				info = self._writeCppInput(int(float(iMetal)) + 1)
+				info = self._writeCppInput(iMetal)
 				if info[0] == 1:
 					outputFile_.write(info[1] + ";" + info[2] + "-L-1;0;")
 				else:
@@ -110,13 +116,18 @@ class Mol2ToMol:
 				else:
 					outputFile_.write("E.{};;;".format(str(e)))
 		
-		fileLog = self.__fileMol2Name + "-cpp.inp.log"
-		fileInp = self.__fileMol2Name + "-cpp.inp"
-		if os.path.isfile(fileLog):
-			os.remove(fileLog)
-		if os.path.isfile(fileInp):
-			os.remove(fileInp)
-
+			fileLog = self.__fileMol2Name + "-cpp.inp.log"
+			fileInp = self.__fileMol2Name + "-cpp.inp"
+			if self.__keepIdentifierFiles:
+				if os.path.isfile(self.__listAtoms[iMetal].split()[1] + '-' +fileInp):
+					os.remove(self.__listAtoms[iMetal].split()[1] + '-' +fileInp)
+				if os.path.isfile(fileInp):
+					os.rename(fileInp,self.__listAtoms[iMetal].split()[1] + '-' +fileInp)
+			else:
+				if os.path.isfile(fileInp):
+					os.remove(fileInp)
+			if os.path.isfile(fileLog):
+				os.remove(fileLog)
 
 
 	def _extractMol2Info(self):
@@ -151,7 +162,7 @@ class Mol2ToMol:
 
 
 	def _writeCppInput(self, iMetal):
-		#Finding ligands and chelations
+		#FINDING LIGANDS AND CHELATIONS
 		iChelates = []
 		ligandsBondedToMetal  = []
 		self._findChelations(iMetal, iChelates, ligandsBondedToMetal)
@@ -168,21 +179,20 @@ class Mol2ToMol:
 			returnInfo.append('a')
 			return returnInfo
 
+		#PRIORITIES DEFINITIONS
 		rankL = []
 		for i in ligandsBondedToMetal:
 			atomsColumns = self.__listAtoms[i-1].split()
 			rankL.append(self.__equivalenceRank[i-1])
-
-		
 		
 		objF = FormulaHandling()
 		objF.generateMolecularFormula(rankL,iChelates)
 		objFenum = FormulaHandling()
 		objFenum.generateEnumerationFormula(rankL,iChelates)
-		rankToTypesMap = objF.calculateNewMapBetweenAtomsAndTypes(rankL,iChelates)
+		rankToTypesMap = objFenum.getRankTransformMap()
 
+		# WRITTING THE CPP FILE
 		cppInput = open(self.__fileMol2Name + "-cpp.inp", "w")
-
 		if objF.getFormula() == objFenum.getFormula():
 			cppInput.write(objF.getFormula() + "\n")
 			cppInput.write("chelates:  {}".format(len(iChelates)))
@@ -193,24 +203,25 @@ class Mol2ToMol:
 			cppInput.write("\n")
 		else:
 			cppInput.write(objFenum.getFormula() + "\n\n")
-
-		atomsColumns = self.__listAtoms[iMetal-1].split()
-		cppInput.write("{:>5}{:>10}{:>10}{:>10}{:>5}\n".format(
+		atomsColumns = self.__listAtoms[iMetal].split()
+		cppInput.write("{:>5}{:>10}{:>10}{:>10}{:>5}{:>5}\n".format(
 		atomsColumns[1],
 		atomsColumns[2],
 		atomsColumns[3],
 		atomsColumns[4],
-		"-1"))
-		
+		"-1",
+		self.__equivalenceRank[iMetal]))
 		rankIndex = iter(rankL)
 		for i in ligandsBondedToMetal:
 			atomsColumns = self.__listAtoms[i-1].split()
-			cppInput.write("{:>5}{:>10}{:>10}{:>10}{:>5}\n".format(
+			cppInput.write("{:>5}{:>10}{:>10}{:>10}{:>5}{:>5}\n".format(
 			atomsColumns[1],
 			atomsColumns[2],
 			atomsColumns[3],
 			atomsColumns[4],
-			rankToTypesMap[next(rankIndex)]))
+			rankToTypesMap[next(rankIndex)],
+			self.__equivalenceRank[i-1]))
+			
 			
 		cppInput.write("end\n")
 		cppInput.close()
@@ -236,11 +247,11 @@ class Mol2ToMol:
 		for i in range(len(self.__listAtoms)):
 			graph[i+1] = self._getAtomBonds(i+1)
 	
-		auxLigandsBondedToMetal = graph[iMetal]
+		auxLigandsBondedToMetal = graph[iMetal+1] #iMetal starts with 1 in mol file
 		for iLigand in auxLigandsBondedToMetal:
 			ligandsBondedToMetal.append(iLigand)
 		
-		del graph[iMetal]
+		del graph[iMetal+1]
 		
 		chelates = []
 		for i in range(len(ligandsBondedToMetal) - 1):
@@ -296,12 +307,6 @@ class Mol2ToMol:
 		return atomsBonded
 
 
-
-
-
-	
-
-	# DEACTIVATED - loading mol2 file
 	def _writeMolFile(self):
 		linesWithMetalBonds = []
 		for iMetal in self.__metalsInMol2File:
