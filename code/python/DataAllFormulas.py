@@ -1,4 +1,4 @@
-#WARNING - monodentates have to come first
+#WARNING - see FormulaHandling object for hierarchy
 allFormList = [[0]]
 aux1FormList = []
 aux1FormList.append([1,'a','a',[0],[]])

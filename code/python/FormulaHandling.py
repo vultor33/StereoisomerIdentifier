@@ -695,7 +695,30 @@ class GenerateAllFormulas:
 
 
 
+#########################################################################
+#########################################################################
+# TESTE ALL FORM LIST
+#for x in allFormList:
+#	len(x)
+#	for y in x:
+#		if y == 0:
+#			continue
+#		if len(y) > 3:
+#			obj1 = FormulaHandling()
+#			obj1.generateMolecularFormula(y[3], y[4])
+#			print(y)
+#			if y[3] != obj1.getReferenceLine():
+#				print("Problem on monodentates definitions")
+#				exit()
+#			if y[4] != obj1.getCanonChelation():
+#				print("Problem on chelate definitions")
+#				exit()
+#########################################################################
+#########################################################################
 
 
 if __name__ ==  "__main__":
 	print("Module to handle molecular formulas")
+	
+	
+	

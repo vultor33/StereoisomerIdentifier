@@ -86,6 +86,8 @@ class StatisticalAnalysis:
 				
 			
 				if row[1] == 'Dimetal':
+					self.fileCodes.write("\'" + row[0] + "\'," + "\n") 
+				
 					stereoID1 = row[4].split('-')
 					stereoID2 = row[8].split('-')
 					if stereoID1[0] != stereoID2[0]:
