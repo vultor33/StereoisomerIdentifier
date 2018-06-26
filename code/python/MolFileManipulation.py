@@ -61,23 +61,8 @@ class Mol2ToMol:
 		print("metal bond lines: ",self.__metalBondsLines)
 
 	def runStereoisomerIdentifierRmsd(self, outputFile_):
-		
-		# Check if it is bimetallic
-		if len(self.__metalsInMol2File) == 2:
-			metal1 = untilPoint(self.__listAtoms[self.__metalsInMol2File[0]].split()[5])
-			metal2 = untilPoint(self.__listAtoms[self.__metalsInMol2File[1]].split()[5])
-			metalConnected = False
-			try:
-				metalConnected = self._checkIfIsConnected(self.__metalsInMol2File[0],self.__metalsInMol2File[1])
-			except Exception as e:
-				metalConnected = False
-			
-			if metal1 == metal2 and metalConnected:
-				outputFile_.write("Dimetal;")
-			else:
-				outputFile_.write("Mix;")
-		else:
-			outputFile_.write("Mix;")
+
+		self._checkIfItIsDimmetallic(outputFile_)
 
 		# Evaluate the stereoisomer of each metal
 		for iMetal in self.__metalsInMol2File:
@@ -162,34 +147,17 @@ class Mol2ToMol:
 
 
 	def _writeCppInput(self, iMetal):
-		#FINDING LIGANDS AND CHELATIONS
-		iChelates = []
-		ligandsBondedToMetal  = []
-		self._findChelations(iMetal, iChelates, ligandsBondedToMetal)
 
-		if len(ligandsBondedToMetal) > 8:
-			raise Exception("Number of ligands error")
-
-		returnInfo = []
-		if len(ligandsBondedToMetal) == 0:
-			raise Exception("No ligands")
-		if len(ligandsBondedToMetal) == 1:
-			returnInfo.append(1)
-			returnInfo.append('a')
-			returnInfo.append('a')
-			return returnInfo
-
-		#PRIORITIES DEFINITIONS
-		rankL = []
-		for i in ligandsBondedToMetal:
-			atomsColumns = self.__listAtoms[i-1].split()
-			rankL.append(self.__equivalenceRank[i-1])
-		
 		objF = FormulaHandling()
-		objF.generateMolecularFormula(rankL,iChelates)
 		objFenum = FormulaHandling()
-		objFenum.generateEnumerationFormula(rankL,iChelates)
-		rankToTypesMap = objFenum.getRankTransformMap()
+		iChelates = []
+		ligandsBondedToMetal = []
+		priorities = self._calculateLigandsPriorities(iMetal, objF, objFenum, iChelates, ligandsBondedToMetal)
+		
+		if len(priorities) > 2:
+			if priorities[1] == 'a':
+				return priorities #acting as returnInfo list (Coordination = 1)
+	
 
 		# WRITTING THE CPP FILE
 		cppInput = open(self.__fileMol2Name + "-cpp.inp", "w")
@@ -211,7 +179,7 @@ class Mol2ToMol:
 		atomsColumns[4],
 		"-1",
 		self.__equivalenceRank[iMetal]))
-		rankIndex = iter(rankL)
+		kIndex = 0
 		for i in ligandsBondedToMetal:
 			atomsColumns = self.__listAtoms[i-1].split()
 			cppInput.write("{:>5}{:>10}{:>10}{:>10}{:>5}{:>5}\n".format(
@@ -219,17 +187,99 @@ class Mol2ToMol:
 			atomsColumns[2],
 			atomsColumns[3],
 			atomsColumns[4],
-			rankToTypesMap[next(rankIndex)],
+			priorities[kIndex],
 			self.__equivalenceRank[i-1]))
+			kIndex += 1
 			
 			
 		cppInput.write("end\n")
 		cppInput.close()
 
+		returnInfo = []
 		returnInfo.append(0)
 		returnInfo.append(objF.getFormula())
 		returnInfo.append(objFenum.getFormula())
 		return returnInfo
+
+
+	def _checkIfItIsDimmetallic(self, outputFile_):
+		if len(self.__metalsInMol2File) == 2:
+			metal1 = untilPoint(self.__listAtoms[self.__metalsInMol2File[0]].split()[5])
+			metal2 = untilPoint(self.__listAtoms[self.__metalsInMol2File[1]].split()[5])
+			metalConnected = False
+			try:
+				metalConnected = self._checkIfIsConnected(self.__metalsInMol2File[0],self.__metalsInMol2File[1])
+			except Exception as e:
+				metalConnected = False
+			
+			if metal1 == metal2 and metalConnected:
+				#check if ligands have the same types
+				for iMetal1 in self.__metalsInMol2File:
+					for iMetal2 in self.__metalsInMol2File:
+						if iMetal1 == iMetal2:
+							continue
+							
+						objF1 = FormulaHandling()
+						objFenum1 = FormulaHandling()
+						iChelates1 = []
+						ligandsBondedToMetal1 = []
+						priorities1 = self._calculateLigandsPriorities(iMetal1, objF1, objFenum1, iChelates1, ligandsBondedToMetal1)
+
+						objF2 = FormulaHandling()
+						objFenum2 = FormulaHandling()
+						iChelates2 = []
+						ligandsBondedToMetal2 = []
+						priorities2 = self._calculateLigandsPriorities(iMetal2, objF2, objFenum2, iChelates2, ligandsBondedToMetal2)
+
+						priorities1.sort()
+						priorities2.sort()
+						if priorities1 == priorities2:
+							outputFile_.write("Dimetal;")
+							return
+						else:
+							outputFile_.write("DimetalNF;")
+							return
+			else:
+				outputFile_.write("Mix;")
+				return
+		else:
+			outputFile_.write("Mix;")
+			return
+	
+	
+	def _calculateLigandsPriorities(self, iMetal,objF, objFenum, iChelates, ligandsBondedToMetal):
+			self._findChelations(iMetal, iChelates, ligandsBondedToMetal)
+	
+			if len(ligandsBondedToMetal) > 8:
+				raise Exception("Number of ligands error")
+	
+			returnInfo = []
+			if len(ligandsBondedToMetal) == 0:
+				raise Exception("No ligands")
+			if len(ligandsBondedToMetal) == 1:
+				returnInfo.append(1)
+				returnInfo.append('a')
+				returnInfo.append('a')
+				return returnInfo
+	
+			#PRIORITIES DEFINITIONS
+			rankL = []
+			for i in ligandsBondedToMetal:
+				atomsColumns = self.__listAtoms[i-1].split()
+				rankL.append(self.__equivalenceRank[i-1])
+			
+			objF.generateMolecularFormula(rankL,iChelates)
+			objFenum.generateEnumerationFormula(rankL,iChelates)
+			rankToTypesMap = objFenum.getRankTransformMap()
+			
+			rankIndex = iter(rankL)
+			rankPriorities = []
+			for i in ligandsBondedToMetal:
+				rankPriorities.append(rankToTypesMap[next(rankIndex)])
+			
+			return rankPriorities
+	
+	
 
 	def _checkIfIsConnected(self, atom1, atom2):		
 		graph = {}

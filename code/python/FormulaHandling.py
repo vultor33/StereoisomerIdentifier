@@ -47,6 +47,25 @@ class FormulaHandling:
 	def getRankTransformMap(self):
 		return self.__newRankTypesTransformMap	
 
+	def calculateAllChelateCombinations(self,size):
+		allChelComb = []
+		chelPossible = list(range(2,size + 1))
+		chelNumber = 1 
+		while chelNumber <= int(math.floor(size/2)):
+			allChel = list(itertools.combinations_with_replacement(chelPossible, chelNumber))
+			for chelI in allChel:
+				sum = 0
+				for iSum in chelI:
+					sum += iSum
+				if sum <= size:
+					allChelComb.append(chelI)
+			chelNumber += 1
+		return allChelComb
+
+	def calculateAllChelatesReaches(self, size, chelSize):
+		chelReach = list(range(0,size))
+		return list(itertools.combinations(chelReach, chelSize))
+
 	#use chelations only if there is repeating ligands
 	def generateEnumerationFormula(self, rank, chelations):
 		oldMap = {}
@@ -69,7 +88,7 @@ class FormulaHandling:
 			self.generateMolecularFormula(rank, [])
 
 	
-	def generateMolecularFormula(self, rank, chelations):	
+	def generateMolecularFormula(self, rank, chelations):
 		if self._chelationsConflict(chelations):
 			raise Exception('chelations not well defined')
 
@@ -80,7 +99,7 @@ class FormulaHandling:
 				lisRankChel.append(rank[iChel])
 			lisRankChel.sort()
 			if lisRankChel[0] in self.__dictChelations:
-				if self.__dictChelations[lisRankChel[0]] != lisRankChel:
+				if self.__dictChelations[lisRankChel[0]] != lisRankChel: #different chelations and same types arent allowed
 					raise Exception('chelations not well defined')
 				self.__dictNumbers[lisRankChel[0]] += 1
 			else:
@@ -103,6 +122,32 @@ class FormulaHandling:
 			else:
 				self.__dictChelations[rank[iAux]] = [rank[iAux]]
 				self.__dictNumbers[rank[iAux]] = 1
+
+		#different chelations and same types arent allowed
+		for keyChel in self.__dictChelations:
+			for chelRank in self.__dictChelations[keyChel]:
+				for keyChel2 in self.__dictChelations:
+					if keyChel == keyChel2:
+						continue
+					for chelRank2 in self.__dictChelations[keyChel2]:
+						if chelRank == chelRank2:
+							raise Exception('chelations not well defined')
+								
+						
+			
+				
+
+
+		for chel in chelations:
+			lisRankChel = []
+			for iChel in chel:
+				lisRankChel.append(rank[iChel])
+			lisRankChel.sort()
+			if lisRankChel[0] in self.__dictChelations:
+				if self.__dictChelations[lisRankChel[0]] != lisRankChel: #different chelations and same type arent allowed
+					raise Exception('chelations not well defined')
+
+
 
 		for key in self.__dictChelations:
 			self.__dictFormulas[key] = self._calculateFormula(self.__dictChelations[key])
@@ -184,15 +229,15 @@ class FormulaHandling:
 			i+=1
 
 
-		# Until here we have an hierarchy on priorities - mono, bidentate, tridentate and etc. This function changes to numbers come first. All previous hierarchy is keeped.
+		# Until here we have an hierarchy on priorities - mono, bidentate, tridentate and etc. This function changes to: numbers come first. All previous hierarchy is keeped.
 		self._redefineChelatesTypes(self.__referenceLineVector,self.__canonChelation)
 
 
 	def _redefineChelatesTypes(self, rank, chelatesList):
 		# Types are redefined. Bidentates stick to the types
 
-		if chelatesList == []:
-			return
+		#if chelatesList == []:
+		#	return
 		
 		#rank type each received chelate is pointing
 		oldMap = {}
@@ -224,16 +269,27 @@ class FormulaHandling:
 			auxDictCanonRanks[keyRanks] = newRankRelation
 			
 		self.__dictCanonRanks = dict(auxDictCanonRanks)
-		
+
+		#Initial type: self.__dictChelations[keyI] (but I have to order here
+		#Final type:  self.__dictCanonRanks[keyI][i]. 
 		for keyI in self.__dictChelations:
-			#mesmo key do cannon
+			#dictChelations comes like this: [3, 9, 9, 10, 11]. I need repeating priorities to come first.
+			mapBetweenChelatesAndTypes = self._calculateNewMapBetweenAtomsAndTypes(self.__dictChelations[keyI])
+			rankInTheInteriorOfTheChelate = list(self.__dictChelations[keyI])
+			for iRank in range(len(rankInTheInteriorOfTheChelate)):
+				rankInTheInteriorOfTheChelate[iRank] = mapBetweenChelatesAndTypes[rankInTheInteriorOfTheChelate[iRank]]
+			rankInTheInteriorOfTheChelate.sort()
 			for i in range(len(self.__dictChelations[keyI])):
-				if self.__dictChelations[keyI][i] in self.__newRankTypesTransformMap:
-					if self.__newRankTypesTransformMap[self.__dictChelations[keyI][i]] != self.__dictCanonRanks[keyI][i]:
+				finalValue = self.__dictCanonRanks[keyI][i]
+				internal = rankInTheInteriorOfTheChelate[i]
+				internalToCipRank = self._dictFindKeyByValue(mapBetweenChelatesAndTypes,internal)
+
+				if internalToCipRank in self.__newRankTypesTransformMap:
+					if self.__newRankTypesTransformMap[internalToCipRank] != finalValue:
 						raise Exception('Error on _redefineChelatesTypes: new ranks couldnt be set')
-					
-				self.__newRankTypesTransformMap[self.__dictChelations[keyI][i]] = self.__dictCanonRanks[keyI][i]
-				
+	
+				self.__newRankTypesTransformMap[internalToCipRank] = finalValue
+
 		auxTypes = []
 		for key in rankCounting:
 			for i in range(rankCounting[key]):
@@ -249,7 +305,7 @@ class FormulaHandling:
 				auxTypes[chelatesList[i][j]] = -1
 
 
-	def calculateNewMapBetweenAtomsAndTypes(self, rank, chelatesList):
+	def _calculateNewMapBetweenAtomsAndTypes(self, rank):
 		newMap = {}
 		sortedRank = list(rank)
 		sortedRank.sort()
@@ -262,28 +318,9 @@ class FormulaHandling:
 				
 		return newMap
 
-	
-
-	def calculateAllChelateCombinations(self,size):
-		allChelComb = []
-		chelPossible = list(range(2,size + 1))
-		chelNumber = 1 
-		while chelNumber <= int(math.floor(size/2)):
-			allChel = list(itertools.combinations_with_replacement(chelPossible, chelNumber))
-			for chelI in allChel:
-				sum = 0
-				for iSum in chelI:
-					sum += iSum
-				if sum <= size:
-					allChelComb.append(chelI)
-			chelNumber += 1
-		return allChelComb
-
-	def calculateAllChelatesReaches(self, size, chelSize):
-		chelReach = list(range(0,size))
-		return list(itertools.combinations(chelReach, chelSize))
-		
+			
 	def _chelationsConflict(self, chelations):
+		# two chelates pointing to the same ligand
 		i = 0
 		j = 0
 		while i < len(chelations) - 1:
