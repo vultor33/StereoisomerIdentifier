@@ -1,4 +1,5 @@
 import csv
+import numpy
 from DataAllFormulas import allFormList
 
 class StatisticalAnalysis:
@@ -8,8 +9,21 @@ class StatisticalAnalysis:
 	def __init__(self, fileName):
 		self._fileName = fileName
 		self.fileCodes = open('CSD-codes-with-errors.txt','w')
+		self.__polyhedronValues = open('polyhedronValues.csv','w')
 		self.__metalStatistics = {}
 		
+
+	def analyzePolyhedron(self, file):
+		allValues = []
+		with open(file, 'r') as csvfile:
+			spamreader = csv.reader(csvfile, delimiter=';', quotechar='|')
+			for row in spamreader:
+				allValues.append(float(row[1]))
+
+		print('mean values of polyhedron rms:  ',numpy.mean(allValues))
+		print('std values of polyhedron rms:  ',numpy.std(allValues, ddof=1))
+		print('max value of polyhedron rms:  ',max(allValues))
+		print('number of polyhedron rms:  ',len(allValues))
 
 
 	def analyze(self):
@@ -69,11 +83,15 @@ class StatisticalAnalysis:
 						elif "E.NoLigands" in elem:
 							enol += 1
 						elif "E.Polyedron" in elem:
+							self._printPolyhedronValue(row)
 							epol += 1
 						break
 				if cont:
 					continue
 					
+					
+				self._printPolyhedronValue(row)
+				
 				self._analyzeAllMetalsRow(row)
 			
 				if row[1] == 'Mix':
@@ -150,7 +168,6 @@ class StatisticalAnalysis:
 
 
 	def _analyzeAllMetalsRow(self,row):
-		#dar sort no metal depois
 		nmet = (len(row)-2)/4
 		i = 0
 
@@ -167,9 +184,6 @@ class StatisticalAnalysis:
 			else:
 				nCoord = stereoID[2]
 				letter = stereoID[3]
-			
-			#montar uma estatistica de cada metal.
-			# 
 		
 			self._generateExcelStatisticsForMetals(
 				metal,
@@ -177,6 +191,25 @@ class StatisticalAnalysis:
 				letter,self.__allGeo.index(stereoID[1] + '-' + stereoID[2]),
 				self.__allPossibleChel.index(chelN))
 		
+			i+=1
+
+	def _printPolyhedronValue(self,row):
+		nmet = (len(row)-2)/4
+		i = 0
+		while i < nmet:
+			cn = str(self._coordinationNumber(row[4 * i + 3]))
+			if len(row) < 4 * i + 5:
+				break
+			if row[4 * i + 5] == '':
+				i+=1
+				continue
+			
+			#specific structures
+			#if cn == '6' and abs(float(row[4 * i + 5])-0.25) < 0.02:
+			#	print(row[0], '  -  ',row[4 * i + 5])
+			#	exit()
+			
+			self.__polyhedronValues.write(cn + ';' + row[4 * i + 5] + '\n')
 			i+=1
 	
 
@@ -219,6 +252,15 @@ class StatisticalAnalysis:
 						nChelates.append(len(iChel))
 					nChelates.sort()
 					return nChelates
+
+	def _coordinationNumber(self,formula):
+		for lineFor in allFormList:
+			for iFormula in lineFor:
+				if iFormula == 0:
+					continue
+				if iFormula[1] == formula:
+					return iFormula[0]
+
 
 	def _generateAllPossibleChel(self):
 		allChel = []
