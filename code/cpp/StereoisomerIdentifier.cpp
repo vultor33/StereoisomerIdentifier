@@ -35,7 +35,12 @@ void StereoisomerIdentifier::identify(const string &fileName_in)
 
 	if (geoCode == 20)
 	{
-		if (rmsd > 0.01)
+		double angleCoord = 180.0e0 - auxMath_.angleFrom3Points(
+			coordMol[1].x, coordMol[1].y, coordMol[1].z,
+			coordMol[0].x, coordMol[0].y, coordMol[0].z,
+			coordMol[2].x, coordMol[2].y, coordMol[2].z) * (180 / auxMath_._pi);
+
+		if (angleCoord > 5.0e0)
 		{
 			cppOut_ << fileName << endl
 				<< "A-2" << endl
@@ -504,7 +509,7 @@ std::string StereoisomerIdentifier::findStereoisomer(
 	fileIsomers_.close();
 
 
-	/* USE FOR TESTS */
+	/* USE FOR TESTS 
 	vector<int> permutationI(idealGeo.size());
 	stringstream convertLine;
 	convertLine << minimumLine;
@@ -518,7 +523,6 @@ std::string StereoisomerIdentifier::findStereoisomer(
 			idealChelates[i][j] = findIndexByValue(permutationI, idealChelates[i][j]);
 	}
 	addChelate(idealGeo, idealChelates);
-
 	string idealFile = fileName + "-ideal.xyz";
 	string csdFile = fileName + "-csd.xyz";
 	printMol(
@@ -531,7 +535,8 @@ std::string StereoisomerIdentifier::findStereoisomer(
 		chelates,
 		stereoLetter,
 		csdFile);
-	
+	*/
+
 
 	if (minimumRmsd == -1.0e0)
 		return "";

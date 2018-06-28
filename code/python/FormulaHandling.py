@@ -132,11 +132,6 @@ class FormulaHandling:
 					for chelRank2 in self.__dictChelations[keyChel2]:
 						if chelRank == chelRank2:
 							raise Exception('chelations not well defined')
-								
-						
-			
-				
-
 
 		for chel in chelations:
 			lisRankChel = []

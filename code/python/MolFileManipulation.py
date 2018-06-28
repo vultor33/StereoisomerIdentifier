@@ -62,8 +62,11 @@ class Mol2ToMol:
 		print("metal bond lines: ",self.__metalBondsLines)
 
 	def runStereoisomerIdentifierRmsd(self, outputFile_):
+		try:
+			self._checkIfItIsDimmetallic(outputFile_)
+		except:
+			outputFile_.write("Mix;")
 
-		self._checkIfItIsDimmetallic(outputFile_)
 
 		# Evaluate the stereoisomer of each metal
 		for iMetal in self.__metalsInMol2File:
@@ -220,17 +223,8 @@ class Mol2ToMol:
 						if iMetal1 == iMetal2:
 							continue
 							
-						objF1 = FormulaHandling()
-						objFenum1 = FormulaHandling()
-						iChelates1 = []
-						ligandsBondedToMetal1 = []
-						priorities1 = self._calculateLigandsPriorities(iMetal1, objF1, objFenum1, iChelates1, ligandsBondedToMetal1)
-
-						objF2 = FormulaHandling()
-						objFenum2 = FormulaHandling()
-						iChelates2 = []
-						ligandsBondedToMetal2 = []
-						priorities2 = self._calculateLigandsPriorities(iMetal2, objF2, objFenum2, iChelates2, ligandsBondedToMetal2)
+						priorities1 = self._getOriginalPriorities(iMetal1)
+						priorities2 = self._getOriginalPriorities(iMetal2)
 
 						priorities1.sort()
 						priorities2.sort()
@@ -280,6 +274,30 @@ class Mol2ToMol:
 			
 			return rankPriorities
 	
+	def _getOriginalPriorities(self, iMetal):
+			iChelates = []
+			ligandsBondedToMetal = []
+			self._findChelations(iMetal, iChelates, ligandsBondedToMetal)
+	
+			if len(ligandsBondedToMetal) > 8:
+				raise Exception("Number of ligands error")
+	
+			returnInfo = []
+			if len(ligandsBondedToMetal) == 0:
+				raise Exception("No ligands")
+			if len(ligandsBondedToMetal) == 1:
+				returnInfo.append(1)
+				returnInfo.append('a')
+				returnInfo.append('a')
+				return returnInfo
+	
+			#PRIORITIES DEFINITIONS
+			rankL = []
+			for i in ligandsBondedToMetal:
+				atomsColumns = self.__listAtoms[i-1].split()
+				rankL.append(self.__equivalenceRank[i-1])
+				
+			return rankL
 	
 
 	def _checkIfIsConnected(self, atom1, atom2):		

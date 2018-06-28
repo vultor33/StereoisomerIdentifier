@@ -101,33 +101,51 @@ class StatisticalAnalysis:
 					if nmet > nmetalsmax:
 						nmetalsmax = nmet
 						metMaxCode = row[0]
+
+				if row[1] == 'DimetalNF':
+					dimDiffFormula += 1
+					self.fileCodes.write(row[0] + " - dimDiffFormula\n") 
 				
 			
 				if row[1] == 'Dimetal':
-					self.fileCodes.write("\'" + row[0] + "\'," + "\n") 
-				
+					#self.fileCodes.write("\'" + row[0] + "\'," + "\n") 
+
 					stereoID1 = row[4].split('-')
 					stereoID2 = row[8].split('-')
-					if stereoID1[0] != stereoID2[0]:
+					if row[3] != row[7]: # tem q olhar a primeira formula
+						raise Exception('DimetalNF failed')
 						dimDiffFormula += 1
+						self.fileCodes.write(row[0] + " - dimDiffFormula\n") 
+						
 					elif (stereoID1[1]+stereoID1[2]) != (stereoID2[1]+stereoID2[2]):
 						dimDiffPoly += 1
+						self.fileCodes.write(row[0] + " - dimDiffPoly\n") 
 						
 					else:
 						if len(stereoID1) == 3:
 							isoG += 1
+							self.fileCodes.write(row[0] + " - isoG\n") 
+							
 						elif stereoID1[4] != stereoID2[4]:
 							isoDiff +=1
+							self.fileCodes.write(row[0] + " - isoDiff\n") 
+
 						elif stereoID1[3] == stereoID2[3]:
 							if stereoID1[3] == 'G':
 								isoG += 1
+								self.fileCodes.write(row[0] + " - isoG\n") 
+								
 							else:
 								isoRR +=1
-								self.fileCodes.write(row[0] + "\n")
+								self.fileCodes.write(row[0] + " - isoRR\n")
+								
 						elif stereoID1[3] == 'G' or stereoID2[3] == 'G':
 							isoDiff +=1
+							self.fileCodes.write(row[0] + " - isoDiff\n")
+							
 						else:
 							isoRS +=1
+							self.fileCodes.write(row[0] + " - isoRS\n")
 				
 	
 	

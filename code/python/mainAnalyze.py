@@ -3,9 +3,9 @@ from StatisticalAnalysis import StatisticalAnalysis
 print('started')
 
 #analise direta
-obj = StatisticalAnalysis('RESULTADOS-metal-bonds-removed.csv')
+obj = StatisticalAnalysis('Dimetals-Teste.csv')
 obj.analyze()
-#obj.analyzePolyhedron('polyhedronValues-version-1.csv') #analise dos poliedros
+#obj.analyzePolyhedron('Dimetals-Teste.csv'.csv') #analise dos poliedros
 
 
 print('finished')
