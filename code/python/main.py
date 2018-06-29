@@ -6,16 +6,15 @@ from MolFileManipulation import Mol2ToMol
 
 
 #CALCULATE WITH LIST
-#calcFilesTemp = [
-#"BEHSIQ"
-#]
-#calcFiles = []
-#for file in calcFilesTemp:
-#	calcFiles.append("G:\\!CSD-database\\"+file+".search1.mol2")
+calcFilesTemp = ["TALWOS"]
+calcFiles = []
+for file in calcFilesTemp:
+	calcFiles.append("G:\\!CSD-database\\"+file+".search1.mol2")
+	#desktop - calcFiles.append("C:\\Users\\frederico\\Desktop\\"+file+".search1.mol2")    
 
-allMol2Files = glob.glob("G:\\!CSD-database\\*.mol2")
-calcFiles = allMol2Files[0:43783]
-del allMol2Files
+#allMol2Files = glob.glob("G:\\!CSD-database\\*.mol2")
+#calcFiles = allMol2Files[0:43783]
+#del allMol2Files
 
 calculating = open("calculating.csv", "w")
 calculating.write("CSD;Info;Metal;Formula;ID;RMSD")
@@ -26,6 +25,7 @@ for mol2 in calcFiles:
 	calculating.write("\n{:<9};".format(mol2.partition(".")[0]))
 	try:
 		obj1 = Mol2ToMol(mol2)
+		#obj1.keepIdentifierFiles()
 		obj1.runStereoisomerIdentifierRmsd(calculating)
 		
 	except Exception as e:
