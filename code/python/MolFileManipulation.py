@@ -463,14 +463,18 @@ class Mol2ToMol:
 		molFile.write("\n")
 		i = 0
 		
-		for atomLine in self.__listAtoms:
+		for atomLine in self.__listAtoms:		
 			listAtomsColumns = atomLine.split()
+		
+			atomName = untilPoint(listAtomsColumns[5])
+			if atomName == 'Du':
+				atomName = '*'
 			molFile.write("{:>10}{:>10}{:>10}".format(
 			listAtomsColumns[2],
 			listAtomsColumns[3],
 			listAtomsColumns[4]))
 			molFile.write(" ")
-			molFile.write(untilPoint(listAtomsColumns[5]))
+			molFile.write(atomName)
 			molFile.write("  0  0  0  0  0  0  0  0  0  0  0  0")
 			molFile.write("\n")
 		
