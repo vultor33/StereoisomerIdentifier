@@ -25,10 +25,8 @@ class StatisticalAnalysis:
 		print('max value of polyhedron rms:  ',max(allValues))
 		print('number of polyhedron rms:  ',len(allValues))
 
-
 	def analyze(self):
-		k = 0
-		l = 0
+		iDimetals = 0
 		erdk = 0
 		enl = 0
 		egrap = 0
@@ -49,10 +47,9 @@ class StatisticalAnalysis:
 		isoRR = 0
 		isoRS = 0
 		
-		
 
 
-		kTl = 0	
+		#listAllCodes = []
 		with open(self._fileName, 'r') as csvfile:
 			spamreader = csv.reader(csvfile, delimiter=';', quotechar='|')
 			for auxRow in spamreader:
@@ -64,7 +61,15 @@ class StatisticalAnalysis:
 
 				if row[0] == 'CSD':
 					continue
-
+				
+				# Check for duplicates
+				#if row[0] in listAllCodes:
+				#	print('duplicate ',row[0])
+				#	continue
+				#else:
+				#	listAllCodes.append(row[0])
+				
+				
 
 				cont = False
 				for elem in row:
@@ -85,6 +90,8 @@ class StatisticalAnalysis:
 						elif "E.Polyedron" in elem:
 							self._printPolyhedronValue(row)
 							epol += 1
+						else:
+							raise Exception('Unhandled error')
 						break
 				if cont:
 					continue
@@ -103,57 +110,54 @@ class StatisticalAnalysis:
 						metMaxCode = row[0]
 
 				if row[1] == 'DimetalNF':
+					iDimetals += 1
 					dimDiffFormula += 1
 					self.fileCodes.write(row[0] + " - dimDiffFormula\n") 
 				
 			
 				if row[1] == 'Dimetal':
+					iDimetals += 1
 					#self.fileCodes.write("\'" + row[0] + "\'," + "\n") 
 
 					stereoID1 = row[4].split('-')
 					stereoID2 = row[8].split('-')
 					if row[3] != row[7]: # tem q olhar a primeira formula
-						raise Exception('DimetalNF failed')
 						dimDiffFormula += 1
-						self.fileCodes.write(row[0] + " - dimDiffFormula\n") 
+						self.fileCodes.write(row[0] + " - dimDiffFormula-" + stereoID1[2] + "\n") 
 						
 					elif (stereoID1[1]+stereoID1[2]) != (stereoID2[1]+stereoID2[2]):
 						dimDiffPoly += 1
-						self.fileCodes.write(row[0] + " - dimDiffPoly\n") 
+						self.fileCodes.write(row[0] + " - dimDiffPoly-" + stereoID1[2] + "\n") 
 						
 					else:
 						if len(stereoID1) == 3:
 							isoG += 1
-							self.fileCodes.write(row[0] + " - isoG\n") 
+							self.fileCodes.write(row[0] + " - isoG-" + stereoID1[2] + "\n") 
 							
 						elif stereoID1[4] != stereoID2[4]:
 							isoDiff +=1
-							self.fileCodes.write(row[0] + " - isoDiff\n") 
+							self.fileCodes.write(row[0] + " - isoDiff-" + stereoID1[2] + "\n") 
 
 						elif stereoID1[3] == stereoID2[3]:
 							if stereoID1[3] == 'G':
 								isoG += 1
-								self.fileCodes.write(row[0] + " - isoG\n") 
+								self.fileCodes.write(row[0] + " - isoG-" + stereoID1[2] + "\n") 
 								
 							else:
 								isoRR +=1
-								self.fileCodes.write(row[0] + " - isoRR\n")
+								self.fileCodes.write(row[0] + " - isoRR-" + stereoID1[2] + "\n")
 								
 						elif stereoID1[3] == 'G' or stereoID2[3] == 'G':
 							isoDiff +=1
-							self.fileCodes.write(row[0] + " - isoDiff\n")
+							self.fileCodes.write(row[0] + " - isoDiff-" + stereoID1[2] + "\n")
 							
 						else:
 							isoRS +=1
-							self.fileCodes.write(row[0] + " - isoRS\n")
-				
+							self.fileCodes.write(row[0] + " - isoRS-" + stereoID1[2] + "\n")
 	
 	
 		print('mix:  ',mixl)
 		print('numero de metais avulsos:  ',ntotalMix)
-		print("DIMETALS")
-		print('total:  ',k)
-		print('same code: ',l)
 		
 		csvMetalStatistics = open('csvMetalStatistics.csv','w')		
 		for key in self.__metalStatistics:
@@ -176,6 +180,7 @@ class StatisticalAnalysis:
 		print("soma:  ",erdk + enl + egrap + efor + e0met + enol + epol)
 
 		print('DIMETALS')
+		print('total:  ',iDimetals)
 		print('diff formula:  ',dimDiffFormula)
 		print('diff poly:  ',dimDiffPoly)
 		print('diff iso:  ',isoDiff)

@@ -8,6 +8,7 @@ conda install scikit-learn
 
 pra rodar:
 
+conda activate mpl33
 ipython pca.py
 
 
@@ -16,10 +17,14 @@ dividi tudo pela quantidade de atomos
 
 Foram removidos os que tem menos de 100 amostras:
 
+Removi os abaixo de 50
+
+Pu - 37
+Am - 3
+
+
 Tm - 68
 Pu - 42
 Pa - 2
 Np - 42
 Am - 1
-
-

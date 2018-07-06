@@ -40,33 +40,46 @@ plt.ylabel('PC 2',fontsize=25)
 plot.scatter(p1, p2, s=4000, c=color, alpha=0.5)
 
 for i, txt in enumerate(labels):
+	#all
+	#plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.2,p2[i]-0.5),size=40)
+	#continue
+
 	if i == 0:#Ag
 		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.6,p2[i]-0.4),size=40)
 	if i == 2:#Au
 		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i],p2[i]-0.4),size=40)
 	if i == 8:#Cu
 		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.4,p2[i]-0.4),size=40)
+	if i == 16:#Hf
+		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.3,p2[i]-0.9),size=40)
 	if i == 17:#Hg
 		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.4,p2[i]-0.4),size=40)
 	if i == 21:#La
-		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.35,p2[i]-0.4),size=40)
+		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.3,p2[i]-0.4),size=40)
 	if i == 27:#Ni
-		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.4,p2[i]-0.4),size=40)
-	if i == 29:#Pb
 		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.3,p2[i]-0.4),size=40)
-	if i == 30:#Pd
-		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.9,p2[i]-0.4),size=40)
-	if i == 32:#Pt
-		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.4,p2[i]-0.4),size=40)
-	if i == 37:#Sc
-		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.4,p2[i]-0.4),size=40)
-	if i == 45:#Tl
+	if i == 28:#Np
+		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.35,p2[i]-0.4),size=40)
+	#if i == 29:#Pb
+	#	plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.3,p2[i]-0.4),size=40)
+	if i == 31:#Pd
+		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.8,p2[i]-0.4),size=40)
+	if i == 33:#Pt
 		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.3,p2[i]-0.4),size=40)
-	if i == 46:#U
+	if i == 38:#Sc
+		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.3,p2[i]-0.4),size=40)
+	if i == 44:#Th
+		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.3,p2[i]-0.4),size=40)
+	if i == 45:#Ti
+		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.25,p2[i]-0.4),size=40)
+	if i == 48:#U
 		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.2,p2[i]-0.5),size=40)
-	if i == 47:#V
+	if i == 49:#V
 		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.2,p2[i]-0.5),size=40)
-	if i == 49:#Y
+	if i == 51:#Y
 		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.15,p2[i]-0.4),size=40)
+	if i == 54:#Zr
+		plot.annotate(txt, xy=(p1[i],p2[i]),xytext=(p1[i]-0.3,p2[i]-0.4),size=40)
+
 
 plt.show()
