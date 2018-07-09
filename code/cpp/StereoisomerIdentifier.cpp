@@ -395,10 +395,14 @@ std::vector<CoordXYZ> StereoisomerIdentifier::findShape(
 			coord,
 			dummy,
 			reflecDummy);
+
 		coord.insert(coord.begin(), metal);
 		for (size_t i = 0; i < coord.size(); i++)
 			coord[i].atomlabel = "H";
-		double rmsd = mrq_.marquesRmsdEqualMass(coord, coord2); //metal removed - different rmsd
+		double rmsd = mrq_.marquesRmsdEqualMass(coord, coord2); //rmsd is different from previous value because the metal was removed
+		
+		//printAllGeometriesRmsd(avaibleGeometries[i], rmsd); activate for debug
+
 		if (rmsd < rmsdMin)
 		{
 			iMin = i;
@@ -700,6 +704,11 @@ void StereoisomerIdentifier::printMol(
 	out_.close();
 }
 
+void StereoisomerIdentifier::printAllGeometriesRmsd(int geoCode, double rmsd)
+{
+	Geometries geo_;
+	cout << "avaible:  " << geo_.sizeToGeometryCodeLetter(geoCode) << rmsd << endl;
+}
 
 void StereoisomerIdentifier::addChelate(std::vector<CoordXYZ> &mol, std::vector< std::vector<int> > &chelates)
 {

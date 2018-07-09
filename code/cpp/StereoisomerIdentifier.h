@@ -113,7 +113,10 @@ private:
 		std::string title,
 		const std::string &fileName);
 
+	void printAllGeometriesRmsd(int geoCode, double rmsd);
+	
 	int findIndexByValue(std::vector<int> & vec, int value);
+	
 };
 
 #endif
