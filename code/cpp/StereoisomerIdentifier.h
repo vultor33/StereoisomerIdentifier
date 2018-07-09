@@ -113,8 +113,8 @@ private:
 		std::string title,
 		const std::string &fileName);
 
-	void printAllGeometriesRmsd(int geoCode, double rmsd);
-	
+	void printStereoMol(const std::vector<CoordXYZ> &mol, const std::string &letter, const int number);
+
 	int findIndexByValue(std::vector<int> & vec, int value);
 	
 };

@@ -494,6 +494,8 @@ std::string StereoisomerIdentifier::findStereoisomer(
 		}
 		addChelate(molI, chelPermuted);
 
+		//printStereoMol(molI, letterType, stereoIndexLine); activate for debug
+
 		auxRmsd = mqRmsd_.marquesRmsdEqualMass(outGeometry, molI);
 		if (auxRmsd == -1.0e0)
 		{
@@ -704,10 +706,12 @@ void StereoisomerIdentifier::printMol(
 	out_.close();
 }
 
-void StereoisomerIdentifier::printAllGeometriesRmsd(int geoCode, double rmsd)
+void StereoisomerIdentifier::printStereoMol(const std::vector<CoordXYZ> &mol, const std::string &letter, const int number)
 {
-	Geometries geo_;
-	cout << "avaible:  " << geo_.sizeToGeometryCodeLetter(geoCode) << rmsd << endl;
+	stringstream convert;
+	convert << number;
+	string fileName = letter + "-" + convert.str() + ".xyz";
+	printMol(mol, fileName);
 }
 
 void StereoisomerIdentifier::addChelate(std::vector<CoordXYZ> &mol, std::vector< std::vector<int> > &chelates)
