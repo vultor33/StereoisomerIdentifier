@@ -158,9 +158,6 @@ void StereoisomerIdentifier::identifyMonoVersion(const string &fileName)
 
 void StereoisomerIdentifier::generateAllMol(string &fileName, int geoCode)
 {
-	remove("testG.xyz");
-	remove("testR.xyz");
-	remove("testS.xyz");
 	ReadWriteFormats rwf_;
 	ifstream file_(fileName.c_str());
 	vector<int> atomTypes;
@@ -178,18 +175,17 @@ void StereoisomerIdentifier::generateAllMol(string &fileName, int geoCode)
 		reflecDummy);
 
 	string line;
-	getline(file_, line);
-	string letterType = line;
-	int iLetterCount = 0;
+	string letterType;
+	int stereoIndexLine = 0;
 	while (getline(file_, line))
 	{
-		if ((line == "R") || (line == "S"))
+		if ((line[0] == 'G') || (line[0] == 'R') || (line[0] == 'S'))
 		{
-			letterType = line;
-			iLetterCount = 0;
+			letterType = line[0];
+			stereoIndexLine = 0;
 			continue;
 		}
-		iLetterCount++;
+		stereoIndexLine++;
 
 		stringstream convertLine;
 		convertLine << line;
@@ -210,7 +206,7 @@ void StereoisomerIdentifier::generateAllMol(string &fileName, int geoCode)
 			idealGeo,
 			chelPermuted,
 			letterType,
-			"test" + letterType + ".xyz");
+			stereoIndexLine);
 	}
 }
 
@@ -395,14 +391,15 @@ std::vector<CoordXYZ> StereoisomerIdentifier::findShape(
 			coord,
 			dummy,
 			reflecDummy);
-
 		coord.insert(coord.begin(), metal);
+
+		//printStereoMol(coord2, "EXPERIMENTAL", 1);//activate for debug
+		//printStereoMol(coord, "X", avaibleGeometries[i]); //activate for debug
+
 		for (size_t i = 0; i < coord.size(); i++)
 			coord[i].atomlabel = "H";
 		double rmsd = mrq_.marquesRmsdEqualMass(coord, coord2); //rmsd is different from previous value because the metal was removed
 		
-		//printAllGeometriesRmsd(avaibleGeometries[i], rmsd); activate for debug
-
 		if (rmsd < rmsdMin)
 		{
 			iMin = i;
@@ -657,8 +654,10 @@ void StereoisomerIdentifier::printMol(
 	const std::vector<CoordXYZ> &mol,
 	const std::vector< std::vector<int> > &chelates,
 	std::string letter,
-	const std::string &fileName)
+	const int index)
 {
+	fileName = generateStereoisomerFileName(letter, index);
+
 	//WATCH ATOM TYPES OF THE CHELATES POINTS
 	ofstream out_;
 	//out_.open(fileName.c_str(), std::ofstream::out | std::ofstream::app);
@@ -706,11 +705,16 @@ void StereoisomerIdentifier::printMol(
 	out_.close();
 }
 
-void StereoisomerIdentifier::printStereoMol(const std::vector<CoordXYZ> &mol, const std::string &letter, const int number)
+string StereoisomerIdentifier::generateStereoisomerFileName(std::string letter, int index)
 {
 	stringstream convert;
-	convert << number;
-	string fileName = letter + "-" + convert.str() + ".xyz";
+	convert << index;
+	return letter + "-" + convert.str() + ".xyz";
+}
+
+void StereoisomerIdentifier::printStereoMol(const std::vector<CoordXYZ> &mol, const std::string &letter, const int index)
+{
+	string fileName = generateStereoisomerFileName(letter, index);
 	printMol(mol, fileName);
 }
 

@@ -110,13 +110,15 @@ private:
 	void printMol(
 		const std::vector<CoordXYZ> &mol, 
 		const std::vector< std::vector<int> > &chelates,
-		std::string title,
-		const std::string &fileName);
+		std::string letter,
+		const int index);
 
-	void printStereoMol(const std::vector<CoordXYZ> &mol, const std::string &letter, const int number);
+	void printStereoMol(const std::vector<CoordXYZ> &mol, const std::string &letter, const int index);
 
 	int findIndexByValue(std::vector<int> & vec, int value);
 	
+	std::string generateStereoisomerFileName(std::string letter, int index);
+
 };
 
 #endif
