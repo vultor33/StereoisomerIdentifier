@@ -27,3 +27,17 @@ Para rodar o pca.py
 conda activate mpl33
 ipython pca.py
 
+
+
+
+SUGESTAO DE MUDANCA
+
+Biblioteca de Grafos facil de usar: python-igraph
+
+instalacao
+conda install -c vtraag python-igraph 
+
+
+
+
+

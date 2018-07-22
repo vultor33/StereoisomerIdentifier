@@ -1,4 +1,6 @@
 from FormulaHandling import FormulaHandling
+from Utilities import Utilities
+from ErrorMessages import ErrorMessages
 import itertools
 import math
 
@@ -28,11 +30,16 @@ class AllMolecularFormulasGenerator:
 	testAllMolecularFormulasGenerator(nCoordinationMax, fileReference)
 	"""
 	def __init__(self):
+		self.__errorMessages_ = ErrorMessages()
+		self.__OUTPUT_FILE_SUGGESTION = "DataAllFormulas.py" # need to be open outside the object
 		self.__coordinationNumber = 0
 		self.__allFormulas = []
 		self.__allEnumerationFormulas = []
 		self.__allReferences = []
 		self.__allChelations = []
+
+	def getOutputFileName(self):
+		return self.__OUTPUT_FILE_SUGGESTION
 
 	def generateAllFormulas(self, coordinationNumber):
 		self.__coordinationNumber = coordinationNumber
@@ -51,25 +58,6 @@ class AllMolecularFormulasGenerator:
 			self.__allReferences[i],
 			self.__allChelations[i]))
 		allFormFile.write("allFormList.append(" + tempListName + ")\n")
-
-	def testAllFormulas(self, fileName, fileReference):
-		allFormulasTest = open(fileReference, "r")
-		fileStreamReference = allFormulasTest.read().splitlines()
-		allFormulaActual = open(fileName, "r")
-		fileStreamActual = allFormulaActual.read().splitlines()
-		for formulaActualI in fileStreamActual:
-			if not formulaActualI in fileStreamReference:
-					print('NOT PASSED')
-					print('This formula wasnt found on reference:  ',formulaActualI)
-					return
-		for formulaReference in fileStreamReference:
-			if not formulaReference in fileStreamActual:
-					print('NOT PASSED')
-					print('This formula wasnt found on actual:  ',formulaReference)
-					return
-		
-		print('PASSED')
-
 
 	def _generateAllMonodentatesFormulas(self):
 		rangeToDefineCombinatios = list(range(0,self.__coordinationNumber))
@@ -100,11 +88,10 @@ class AllMolecularFormulasGenerator:
 			self._addFormula(priorities, chelations)
 
 		except Exception as e:
-			if str(e) == "chelations not well defined":
+			if str(e) == self.__errorMessages_.getChelationDefinitionError():
 				pass
 			else:
-				print("Unexpected error:  ",str(e))
-				print("Please, contact developers")
+				print(self.__errorMessages_.getUnexpecterError(str(e)))
 
 	def _addEnumerationFormula(self, priorities,chelations):
 			objE = FormulaHandling()
@@ -132,8 +119,12 @@ class AllMolecularFormulasGenerator:
 		allChelations = list(itertools.product(*chelList))
 		return allChelations
 
+
+################################################################################################################################################################
+
 def useAllMolecularFormulasGenerator(nCoordinationMax):
-	fileName = "DataAllFormulas.py"
+	allFormulas_ = AllMolecularFormulasGenerator()
+	fileName = allFormulas_.getOutputFileName()
 	allFormFile = open(fileName, "w")
 	allFormFile.write("allFormList = [[0]]\n")
 	for i in range(1,nCoordinationMax + 1):
@@ -142,15 +133,24 @@ def useAllMolecularFormulasGenerator(nCoordinationMax):
 		objG.printAllFormulasToStream(allFormFile)
 	allFormFile.close()
 
-def testAllMolecularFormulasGenerator(nCoordinationMax, fileReference):
+def testAllMolecularFormulasGenerator():
+	print('TESTING AllMolecularFormulasGenerator')
+
 	useAllMolecularFormulasGenerator(6)
-	objT = AllMolecularFormulasGenerator()
-	objT.testAllFormulas("DataAllFormulas.py",fileReference)
+
+	util_ = Utilities()
+	allFormulas_ = AllMolecularFormulasGenerator()
+	outputFileName = allFormulas_.getOutputFileName()
+	testFilePath = "TestFiles\\" + outputFileName + '-reference'
+	
+	if util_.isOutOfOrderFilesEqual(outputFileName,testFilePath):
+		print('PASSED')
+	else:
+		print('NOT PASSED')
 
 
 if __name__ ==  "__main__":
-	print("DEFAULT TEST")
-	testAllMolecularFormulasGenerator(6, "DataAllFormulas-reference.py")
+	testAllMolecularFormulasGenerator()
 
 
 

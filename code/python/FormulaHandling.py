@@ -1,249 +1,425 @@
 from collections import Counter
-import itertools
-import math
 import operator
-
-alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','e','s','t','u','v','x','w','y','z'] # gerar alfabeto com o python
-
-justLetters = lambda enterString : ''.join([i for i in enterString if i.isalpha()])
+from ErrorMessages import ErrorMessages
+from Utilities import Utilities
 
 class FormulaHandling:
-	"""Class to generate and transform molecular formulas"""
-	
+	"""Class to generate and transform molecular formulas
+
+    Parameters
+    -------
+	Set of priorities\n
+	Set of chelations
+
+    Returns
+    -------
+	Molecular formula\n
+	Final priorities\n
+	Final chelations\n
+	Relation of input priorities to final priorities
+    Notes
+    ----------
+	Use testAllMolecularFormulasGenerator() and testRunStereoisomerIdentifier() for tests
+	"""
+
 	def __init__(self):
+		self.__errorMessages_ = ErrorMessages()
+		self.__util_ = Utilities()
+
+		self.__inputPriorities = []
+		self.__inputChelations = []
 
 		#Ex: received: rank: [10,9,14,45,45]. chelations: [[1,2],[3,4]]
 		self.__finalFormula = ''                            # Molecular formula. Ex: Ma(A2)(AB)
-		self.__referenceLineVector = []                     # Line of priority types. Ex: [0,1,1,2,3]
-		self.__canonChelation = []                          # Chelation related to the referenceLineVector. Ex: [[1,2],[3,4]]
-		
+		self.__finalPriorites = []                     # Line of priority types. Ex: [0,1,1,2,3]
+		self.__finalChelations = []                          # Chelation related to the referenceLineVector. Ex: [[1,2],[3,4]]
 
 		# These are relations of canon types and received types
-		self.__newRankTypesTransformMap = {}                # ranks were transformed. this dict relates old types to new types.
-		self.__dictCanonRanks = {}                          # Rank of each type and chelate. Ex: {10:[0],9:[1,2]}
-		self.__dictFormulas = {}                            # Formula of each type. Ex: {9:'ab',10:'a'}
-		self.__dictChelations = {}                          # Keys: first type of the chelating group. values: all other types ordered.  Ex: {1:[1,2]}
-		self.__dictNumbers = {}                             # Number of each type of ligands. Polidentates are counted as one and it's first type is used. Ex:{0:1,1:1}
-		
-		
-	def printInfo(self):
-		print('Canon chelation:  ',self.__canonChelation)
-		print('formula:  ',self.__finalFormula)
-		print('referencelinevector:  ',self.__referenceLineVector)
-		print('Canon relation:  ',self.__dictCanonRanks)		
-		print('Formulas:  ',self.__dictFormulas)
-		print('Formula numbers:  ',self.__dictNumbers)
-		print('Chelations from types:  ',self.__dictChelations)
+		self.__inputPrioritiesToFinalPrioritiesMap = {}                # ranks were transformed. this dict relates old types to new types.
+		self.__priorityOfEachLigand = {}                    # Rank of each type and chelate. Ex: {10:[0],9:[1,2]}
+		self.__formulaOfEachLigand = {}                     # Ex: {9:'ab',10:'a'}
+		self.__chelationOfEachLigand = {}                   # Keys: first type of the chelating group. values: all other types ordered.  Ex: {1:[1,2]}
+		self.__amountOfEachLigand = {}                      # Polidentates are counted as one and it's first type is used. Ex:{0:1,1:1}
 
+		self.__alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','e','s','t','u','v','x','w','y','z']
+		
 	def getFormula(self):
 		return self.__finalFormula
 		
 	def getReferenceLine(self):
-		return self.__referenceLineVector
+		return self.__finalPriorites
 	
 	def getCanonChelation(self):
-		return self.__canonChelation
+		return self.__finalChelations
 		
-	def getRankTransformMap(self):
-		return self.__newRankTypesTransformMap	
+	def getInputPrioritiesToFinalPrioritiesMap(self):
+		return self.__inputPrioritiesToFinalPrioritiesMap	
 
-	def calculateAllChelateCombinations(self,size):
-		allChelComb = []
-		chelPossible = list(range(2,size + 1))
-		chelNumber = 1 
-		while chelNumber <= int(math.floor(size/2)):
-			allChel = list(itertools.combinations_with_replacement(chelPossible, chelNumber))
-			for chelI in allChel:
-				sum = 0
-				for iSum in chelI:
-					sum += iSum
-				if sum <= size:
-					allChelComb.append(chelI)
-			chelNumber += 1
-		return allChelComb
+	def generateEnumerationFormula(self, priorities, chelations):
+		self.__inputPriorities = priorities
+		self.__inputChelations = chelations
 
-	def calculateAllChelatesReaches(self, size, chelSize):
-		chelReach = list(range(0,size))
-		return list(itertools.combinations(chelReach, chelSize))
+		isDuplicate = self._checkIfThereAreEqualFormulaChelates()
 
-	#use chelations only if there is repeating ligands
-	def generateEnumerationFormula(self, rank, chelations):
-		oldMap = {}
-		for chel in chelations:
-			for chelI in chel:
-				oldMap[chelI] = rank[chelI]
-
-		duplicate = False
-		for i in range(len(chelations)-1):
-			for j in range(len(chelations)):
-				if i == j:
-					continue
-				for chelI in chelations[i]:
-					for chelJ in chelations[j]:
-						if oldMap[chelI] == oldMap[chelJ]:
-							duplicate = True
-		if duplicate:
-			self.generateMolecularFormula(rank, chelations)
+		if isDuplicate:
+			self.generateMolecularFormula(priorities, chelations)
 		else:
-			self.generateMolecularFormula(rank, [])
+			self.generateMolecularFormula(priorities, [])
 
-	
+
 	def generateMolecularFormula(self, rank, chelations):
-		if self._chelationsConflict(chelations):
-			raise Exception('chelations not well defined')
+		self.__inputPriorities = rank
+		self.__inputChelations = chelations
 
-		#count chelates and define self.__dictChelations (see above)	
-		for chel in chelations:
+		self._countLigandsAndDefineDictChelations()
+
+		self._defineFormulaOfEachLigand()
+
+		dictPriorities = self._rankFormulasByItsCanonicalPriorities() # Apply the new 3 CIP rules on each formula to rank them
+
+		self._defineFinalFormula(dictPriorities)
+
+		self._defineAllFinalPrioritiesAndChelations(dictPriorities)
+
+		self._redefineChelatesTypes() # Until here we have an hierarchy on priorities - mono, bidentate, tridentate and etc. This function changes to: numbers come first. All previous hierarchy is keeped.
+
+
+##################################################################################################
+
+
+	def _definePriorityOfEachLigand(self, currentPriority, canonicalPriority):
+		for iCan in range(len(canonicalPriority)):
+			canonicalPriority[iCan] += currentPriority
+		return canonicalPriority
+
+	def _defineAllFinalPrioritiesAndChelations(self, dictPriorities):
+		chelationBitePosition = 0
+		currentPriorityIndex = 0
+		for i in range(len(dictPriorities.keys())):
+			keyI = self.__util_.dictFindKeyByValue(dictPriorities,i)
+			currentPriority = self._obtainCanonicalPriorityByItsFormula(self.__formulaOfEachLigand[keyI])
+			lastPriority = currentPriority[-1]
+			
+			self.__priorityOfEachLigand[keyI] = self._definePriorityOfEachLigand(currentPriorityIndex, currentPriority)
+			self._defineFinalPrioritiesAndChelations(keyI, chelationBitePosition)
+
+			chelationBitePosition += len(self.__amountOfEachLigand[keyI]*self.__priorityOfEachLigand[keyI])
+			currentPriorityIndex += lastPriority + 1
+	
+	def _defineFinalPrioritiesAndChelations(self, keyI, chelationBitePosition):
+		for i in  range(self.__amountOfEachLigand[keyI]):
+			chelTemp = []
+			for iCan in self.__priorityOfEachLigand[keyI]:
+				self.__finalPriorites += [iCan]
+				chelTemp.append(chelationBitePosition)
+				chelationBitePosition+=1
+			if len(chelTemp) > 1:
+				self.__finalChelations.append(chelTemp)
+	
+
+##################################################################################################
+
+	def _countLigandsAndDefineDictChelations(self):
+		self._checkIfChelationsPointToSameDonorAtom()
+		self._countChelatedLigandsAndAdvanceDictChelations()
+		self._countMonodentateLigandsAndAdvanceDictChelations()
+		self._checkIfThereAreDifferentChelatedLigandsWithSameTypes()
+
+	def _checkIfChelationsPointToSameDonorAtom(self):
+		i = 0
+		j = 0
+		while i < len(self.__inputChelations) - 1:
+			j = i + 1
+			while j < len(self.__inputChelations):
+				for chelI in self.__inputChelations[i]:
+					for chelJ in self.__inputChelations[j]:
+						if chelI == chelJ:
+							raise Exception(self.__errorMessages_.getChelationDefinitionError())
+				j+=1
+			i+=1
+
+	def _countChelatedLigandsAndAdvanceDictChelations(self):
+		for chel in self.__inputChelations:
 			lisRankChel = []
 			for iChel in chel:
-				lisRankChel.append(rank[iChel])
+				lisRankChel.append(self.__inputPriorities[iChel])
 			lisRankChel.sort()
-			if lisRankChel[0] in self.__dictChelations:
-				if self.__dictChelations[lisRankChel[0]] != lisRankChel: #different chelations and same types arent allowed
-					raise Exception('chelations not well defined')
-				self.__dictNumbers[lisRankChel[0]] += 1
+			if lisRankChel[0] in self.__chelationOfEachLigand:
+				if self.__chelationOfEachLigand[lisRankChel[0]] != lisRankChel: #different chelations and same types arent allowed
+					raise Exception(self.__errorMessages_.getChelationDefinitionError())
+				self.__amountOfEachLigand[lisRankChel[0]] += 1
 			else:
-				self.__dictChelations[lisRankChel[0]] = lisRankChel
-				self.__dictNumbers[lisRankChel[0]] = 1
+				self.__chelationOfEachLigand[lisRankChel[0]] = lisRankChel
+				self.__amountOfEachLigand[lisRankChel[0]] = 1
 
+	def _countMonodentateLigandsAndAdvanceDictChelations(self):
 		allChelPositios = []
-		for chelList in chelations:
+		for chelList in self.__inputChelations:
 			for chelI in chelList:
 				allChelPositios += [chelI]
 
-		# count monodentates
-		for iAux in range(len(rank)):
+		for iAux in range(len(self.__inputPriorities)):
 			if iAux in allChelPositios:
 				continue
-			if rank[iAux] in self.__dictChelations:
-				if self.__dictChelations[rank[iAux]] != [rank[iAux]]:
-					raise Exception('chelations not well defined')
-				self.__dictNumbers[rank[iAux]] += 1
+			if self.__inputPriorities[iAux] in self.__chelationOfEachLigand:
+				if self.__chelationOfEachLigand[self.__inputPriorities[iAux]] != [self.__inputPriorities[iAux]]:
+					raise Exception(self.__errorMessages_.getChelationDefinitionError())
+				self.__amountOfEachLigand[self.__inputPriorities[iAux]] += 1
 			else:
-				self.__dictChelations[rank[iAux]] = [rank[iAux]]
-				self.__dictNumbers[rank[iAux]] = 1
+				self.__chelationOfEachLigand[self.__inputPriorities[iAux]] = [self.__inputPriorities[iAux]]
+				self.__amountOfEachLigand[self.__inputPriorities[iAux]] = 1
 
-		#different chelations and same types arent allowed
-		for keyChel in self.__dictChelations:
-			for chelRank in self.__dictChelations[keyChel]:
-				for keyChel2 in self.__dictChelations:
+	def _checkIfThereAreDifferentChelatedLigandsWithSameTypes(self):
+		for keyChel in self.__chelationOfEachLigand:
+			for chelRank in self.__chelationOfEachLigand[keyChel]:
+				for keyChel2 in self.__chelationOfEachLigand:
 					if keyChel == keyChel2:
 						continue
-					for chelRank2 in self.__dictChelations[keyChel2]:
+					for chelRank2 in self.__chelationOfEachLigand[keyChel2]:
 						if chelRank == chelRank2:
-							raise Exception('chelations not well defined')
+							raise Exception(self.__errorMessages_.getChelationDefinitionError())
 
-		for chel in chelations:
+		for chel in self.__inputChelations:
 			lisRankChel = []
 			for iChel in chel:
-				lisRankChel.append(rank[iChel])
+				lisRankChel.append(self.__inputPriorities[iChel])
 			lisRankChel.sort()
-			if lisRankChel[0] in self.__dictChelations:
-				if self.__dictChelations[lisRankChel[0]] != lisRankChel: #different chelations and same type arent allowed
-					raise Exception('chelations not well defined')
+			if lisRankChel[0] in self.__chelationOfEachLigand:
+				if self.__chelationOfEachLigand[lisRankChel[0]] != lisRankChel:
+					raise Exception(self.__errorMessages_.getChelationDefinitionError())
 
+##################################################################################################
 
+	def _checkIfThereAreEqualFormulaChelates(self):
+		priorityOfDonorAtoms = self._calculatePrioritiesOfEachDonorAtomAtChelation(self.__inputPriorities, self.__inputChelations)
+		duplicate = False
+		for i in range(len(self.__inputChelations)-1):
+			for j in range(len(self.__inputChelations)):
+				if i == j:
+					continue
+				for chelI in self.__inputChelations[i]:
+					for chelJ in self.__inputChelations[j]:
+						if priorityOfDonorAtoms[chelI] == priorityOfDonorAtoms[chelJ]:
+							duplicate = True
 
-		for key in self.__dictChelations:
-			self.__dictFormulas[key] = self._calculateFormula(self.__dictChelations[key])
+		return duplicate
 
+	def _calculatePrioritiesOfEachDonorAtomAtChelation(self, priorities, chelations):
+		prioritiesOfDonorAtoms = {}
+		for chel in chelations:
+			for chelI in chel:
+				prioritiesOfDonorAtoms[chelI] = priorities[chelI]
+		
+		return prioritiesOfDonorAtoms
+	
+##################################################################################################
 
-		trade = True
-		while trade:
-			trade = False
-			for key1 in self.__dictFormulas:
-				for key2 in self.__dictFormulas:
+	def _defineFormulaOfEachLigand(self):
+		for key in self.__chelationOfEachLigand:
+			self.__formulaOfEachLigand[key] = self._calculateFormula(self.__chelationOfEachLigand[key])
+
+		listSorted = False  #bubble method
+		while not listSorted: 
+			listSorted = True
+			for key1 in self.__formulaOfEachLigand:
+				for key2 in self.__formulaOfEachLigand:
 					if key1 == key2:
 						continue
-					elif self.__dictFormulas[key1] == self.__dictFormulas[key2]:
-						#solving conflict
-						if self.__dictNumbers[key1] > self.__dictNumbers[key2]:
-							self.__dictFormulas[key2] = self._advanceFormula(self.__dictFormulas[key2])
-							trade = True
-						elif self.__dictNumbers[key1] < self.__dictNumbers[key2]:
-							self.__dictFormulas[key1] = self._advanceFormula(self.__dictFormulas[key1])
-							trade = True
-						else:
-							if key1 < key2:
-								self.__dictFormulas[key2] = self._advanceFormula(self.__dictFormulas[key2])
-								trade = True
-							elif key1 > key2:
-								self.__dictFormulas[key1] = self._advanceFormula(self.__dictFormulas[key1])
-								trade = True
-							else:
-								raise Exception('Error on molecular formula conflicts')
-	
+					elif self.__formulaOfEachLigand[key1] != self.__formulaOfEachLigand[key2]:
+						continue
+					else:
+						listSorted = self._solveFormulaPriorityConflict(key1,key2)
 
-		dictPriorities = {}  #Priorities of each key, add 1 if it is bidentate and etc. This are used to define self.__dictCanonRanks
-		for key in self.__dictFormulas:
-			dictPriorities[key] = 0
+	def _solveFormulaPriorityConflict(self, key1, key2):
+		if self.__amountOfEachLigand[key1] > self.__amountOfEachLigand[key2]:
+			self.__formulaOfEachLigand[key2] = self._advanceFormula(self.__formulaOfEachLigand[key2])
+			return False
+		elif self.__amountOfEachLigand[key1] < self.__amountOfEachLigand[key2]:
+			self.__formulaOfEachLigand[key1] = self._advanceFormula(self.__formulaOfEachLigand[key1])
+			return False
+		else:
+			if key1 < key2:
+				self.__formulaOfEachLigand[key2] = self._advanceFormula(self.__formulaOfEachLigand[key2])
+				return False
+			elif key1 > key2:
+				self.__formulaOfEachLigand[key1] = self._advanceFormula(self.__formulaOfEachLigand[key1])
+				return False
+			else:
+				raise Exception(self.__errorMessages_.getMolecularFormulaError())
+		
+		return True
+
+	#from formula: last term must be the largest and first the lowest
+	def _advanceFormula(self,formula):
+		types = self.__util_.justLetters(formula)
+		deltaIndex = self.__alphabet.index(types[len(types)-1]) - self.__alphabet.index(types[0]) + 1
+		newFormula = ''
+		for iFor in formula:
+			if iFor.isdigit():
+				newFormula += iFor
+				continue
+			newFormula += self.__alphabet[deltaIndex + self.__alphabet.index(iFor)]
 	
+		return newFormula
+
+
+	def _calculateFormula(self, rank):
+		rankCounting = Counter(rank)
+		rankCountingElems = []
+		for comp in rankCounting:
+			rankCountingElems.append(rankCounting[comp])
+
+		rankCountingElems.sort()
+		ligandsAmount = list(rankCountingElems)
+		ligandsAmount.reverse()
+		ligandTypes = self.__alphabet[:len(ligandsAmount)]
+		molecularFormula = ""
+		i = 0		
+		while i < len(ligandTypes):
+			if ligandsAmount[i] == 1:
+				molecularFormula += ligandTypes[i]
+			else:
+				molecularFormula += ligandTypes[i] + str(ligandsAmount[i])
+			i+=1
+		return molecularFormula
+
+##################################################################################################
+
+
+	def _rankFormulasByItsCanonicalPriorities(self):
+		dictPriorities = {}  #Priorities of each key, add 1 if it is bidentate and etc. This are used to define self.__priorityOfEachLigand
+		for key in self.__formulaOfEachLigand:
+			dictPriorities[key] = 0
+
 		# bubble method to define priorities. All starts at zero, changes are decided by self._formulasConflictTrade
 		trade  = True
 		while trade:
 			trade = False
-			for key1 in self.__dictFormulas:
-				for key2 in self.__dictFormulas:
+			for key1 in self.__formulaOfEachLigand:
+				for key2 in self.__formulaOfEachLigand:
 					if key1 == key2:
 						continue
 					if dictPriorities[key1] == dictPriorities[key2]:
 						trade = True
-						if self._formulasConflictTrade(self.__dictFormulas[key1],self.__dictFormulas[key2]):
+						if self._firstFormulaHasPreferenceOverTheSecond(self.__formulaOfEachLigand[key1],self.__formulaOfEachLigand[key2]):
 							dictPriorities[key1] += 1
 						else:
 							dictPriorities[key2] += 1
+							
+		return dictPriorities
 
-		i = 0
-		j = 0
-		k = 0
-		while i < len(self.__dictFormulas.keys()):
-			keyI = self._dictFindKeyByValue(dictPriorities,i)
-			canon = self._formulasCanonRank(self.__dictFormulas[keyI])
-			tempK = canon[len(canon) - 1]
-			for iCan in range(len(canon)):
-				canon[iCan] += k
-			self.__dictCanonRanks[keyI] = canon
-			for iTemp in range(self.__dictNumbers[keyI]):
-				chelTemp = []
-				for iCan in canon:
-					self.__referenceLineVector += [iCan]
-					chelTemp.append(j)
-					j+=1
-				if len(chelTemp) > 1:
-					self.__canonChelation.append(chelTemp)
-			
-			
-			if len(self.__dictFormulas[keyI]) > 1:
-				self.__finalFormula += '(' + str(self.__dictFormulas[keyI]).upper() + ')'
-			else:
-				self.__finalFormula += str(self.__dictFormulas[keyI])
-			if self.__dictNumbers[keyI] > 1:
-				self.__finalFormula += str(self.__dictNumbers[keyI])
+	def _firstFormulaHasPreferenceOverTheSecond(self, formula1, formula2):
+		canon1 = self._obtainCanonicalPriorityByItsFormula(formula1)
+		canon2 = self._obtainCanonicalPriorityByItsFormula(formula2)
 	
-			k += tempK + 1
-			i+=1
+		if len(canon1) != len(canon2):
+			return len(canon1) > len(canon2)
+		else:
+			i = 0
+			while i < len(canon1):
+				if canon1[i] != canon2[i]:
+					return canon1[i] > canon2[i]
+				i+=1
+			
+			if self.__alphabet.index(formula1[0]) != self.__alphabet.index(formula2[0]):
+				return self.__alphabet.index(formula1[0]) > self.__alphabet.index(formula2[0])
+			else:
+				raise Exception(self.__errorMessages_.getFirstFormulaHasPreferenceOverTheSecondError())
 
 
-		# Until here we have an hierarchy on priorities - mono, bidentate, tridentate and etc. This function changes to: numbers come first. All previous hierarchy is keeped.
-		self._redefineChelatesTypes(self.__referenceLineVector,self.__canonChelation)
+	def _obtainCanonicalPriorityByItsFormula(self, formula):
+		k = 0
+		rankCanon = []
+		for i in range(len(formula)):
+			if formula[i].isdigit():
+				for iR in range(int(float(formula[i]))-1):
+					rankCanon.append(k-1)
+			else:
+				rankCanon.append(k)
+				k+=1
+
+		return rankCanon
+	
+##################################################################################################
+
+	def _defineFinalFormula(self, dictPriorities):
+		for i in range(len(dictPriorities.keys())):
+			keyI = self.__util_.dictFindKeyByValue(dictPriorities,i)
+			if len(self.__formulaOfEachLigand[keyI]) > 1:
+				self.__finalFormula += '(' + str(self.__formulaOfEachLigand[keyI]).upper() + ')'
+			else:
+				self.__finalFormula += str(self.__formulaOfEachLigand[keyI])
+			if self.__amountOfEachLigand[keyI] > 1:
+				self.__finalFormula += str(self.__amountOfEachLigand[keyI])
+
+##################################################################################################
 
 
-	def _redefineChelatesTypes(self, rank, chelatesList):
-		# Types are redefined. Bidentates stick to the types
-
-		#if chelatesList == []:
-		#	return
+	def _redefineChelatesTypes(self):
+		prioritiesOfDonorAtoms = self._calculatePrioritiesOfEachDonorAtomAtChelation(self.__finalPriorites,self.__finalChelations)
 		
-		#rank type each received chelate is pointing
-		oldMap = {}
-		for chel in chelatesList:
-			for chelI in chel:
-				oldMap[chelI] = rank[chelI]
-				
+		prioritiesTransformMap = self._definePrioritiesTransformMap()
+		
+		self._redefinePriorityOfEachLigand(prioritiesTransformMap)
 
-		rankTypesTransformMap = {} # keys:old rank - value:new rank | always: [0 0 0 1 2 3 4]
-		rankCounting = Counter(rank)
-		oldRankCounting = dict(rankCounting)
+		self._defineInputPrioritiesToFinalPrioritiesMap()
+
+		self._redefineFinalPrioritiesAndChelations(prioritiesTransformMap, prioritiesOfDonorAtoms)
+
+
+	def _redefineFinalPrioritiesAndChelations(self, prioritiesTransformMap, prioritiesOfDonorAtoms):
+		amountOfEachPriority = Counter(self.__finalPriorites)
+		
+		auxTypes = []
+		for key in amountOfEachPriority:
+			for i in range(amountOfEachPriority[key]):
+				auxTypes.append(prioritiesTransformMap[key])
+
+		auxTypes.sort()
+		for i in range(len(auxTypes)):
+			self.__finalPriorites[i] = auxTypes[i]
+		for i in range(len(self.__finalChelations)):
+			for j in range(len(self.__finalChelations[i])):
+				self.__finalChelations[i][j] = auxTypes.index(prioritiesTransformMap[prioritiesOfDonorAtoms[self.__finalChelations[i][j]]])
+				auxTypes[self.__finalChelations[i][j]] = -1
+		
+
+	def _defineInputPrioritiesToFinalPrioritiesMap(self):
+		#Initial type: self.__chelationOfEachLigand[keyI] (but I have to order here
+		#Final type:  self.__priorityOfEachLigand[keyI][i]. 
+		for keyI in self.__chelationOfEachLigand:
+			#dictChelations comes like this: [3, 9, 9, 10, 11]. I need repeating priorities to come first.
+			mapBetweenChelatesAndTypes = self._calculateNewMapBetweenAtomsAndTypes(self.__chelationOfEachLigand[keyI])
+			rankInTheInteriorOfTheChelate = list(self.__chelationOfEachLigand[keyI])
+			for iRank in range(len(rankInTheInteriorOfTheChelate)):
+				rankInTheInteriorOfTheChelate[iRank] = mapBetweenChelatesAndTypes[rankInTheInteriorOfTheChelate[iRank]]
+			rankInTheInteriorOfTheChelate.sort()
+			for i in range(len(self.__chelationOfEachLigand[keyI])):
+				finalValue = self.__priorityOfEachLigand[keyI][i]
+				internal = rankInTheInteriorOfTheChelate[i]
+				internalToCipRank = self.__util_.dictFindKeyByValue(mapBetweenChelatesAndTypes,internal)
+
+				if internalToCipRank in self.__inputPrioritiesToFinalPrioritiesMap:
+					if self.__inputPrioritiesToFinalPrioritiesMap[internalToCipRank] != finalValue:
+						raise Exception(self.__errorMessages_.getRedefineChelateTypesError())
+	
+				self.__inputPrioritiesToFinalPrioritiesMap[internalToCipRank] = finalValue
+		
+
+	def _redefinePriorityOfEachLigand(self, rankTypesTransformMap):
+		auxDictCanonRanks = {}
+		for keyRanks in self.__priorityOfEachLigand:
+			newRankRelation = []
+			for elem in self.__priorityOfEachLigand[keyRanks]:
+				newRankRelation.append(rankTypesTransformMap[elem])
+			auxDictCanonRanks[keyRanks] = newRankRelation
+		self.__priorityOfEachLigand = dict(auxDictCanonRanks)
+
+
+	def _definePrioritiesTransformMap(self):
+		amountOfEachPriority = Counter(self.__finalPriorites)
+		prioritiesTransformMap = {} # keys:old rank - value:new rank | always: [0 0 0 1 2 3 4]
+		oldRankCounting = dict(amountOfEachPriority)
 		for i in range(len(oldRankCounting)):
 			maxKey = max(oldRankCounting.items(), key=operator.itemgetter(1))[0]
 			listMax = [maxKey]
@@ -253,52 +429,10 @@ class FormulaHandling:
 				if oldRankCounting[keysRank] == oldRankCounting[maxKey]:
 					listMax.append(keysRank)
 			maxKey = min(listMax) #taking min of this list of equal values. This gives all hierarchy information
-			rankTypesTransformMap[maxKey] = i
+			prioritiesTransformMap[maxKey] = i
 			del oldRankCounting[maxKey]
-
-		auxDictCanonRanks = {}
-		for keyRanks in self.__dictCanonRanks:
-			newRankRelation = []
-			for elem in self.__dictCanonRanks[keyRanks]:
-				newRankRelation.append(rankTypesTransformMap[elem])
-			auxDictCanonRanks[keyRanks] = newRankRelation
-			
-		self.__dictCanonRanks = dict(auxDictCanonRanks)
-
-		#Initial type: self.__dictChelations[keyI] (but I have to order here
-		#Final type:  self.__dictCanonRanks[keyI][i]. 
-		for keyI in self.__dictChelations:
-			#dictChelations comes like this: [3, 9, 9, 10, 11]. I need repeating priorities to come first.
-			mapBetweenChelatesAndTypes = self._calculateNewMapBetweenAtomsAndTypes(self.__dictChelations[keyI])
-			rankInTheInteriorOfTheChelate = list(self.__dictChelations[keyI])
-			for iRank in range(len(rankInTheInteriorOfTheChelate)):
-				rankInTheInteriorOfTheChelate[iRank] = mapBetweenChelatesAndTypes[rankInTheInteriorOfTheChelate[iRank]]
-			rankInTheInteriorOfTheChelate.sort()
-			for i in range(len(self.__dictChelations[keyI])):
-				finalValue = self.__dictCanonRanks[keyI][i]
-				internal = rankInTheInteriorOfTheChelate[i]
-				internalToCipRank = self._dictFindKeyByValue(mapBetweenChelatesAndTypes,internal)
-
-				if internalToCipRank in self.__newRankTypesTransformMap:
-					if self.__newRankTypesTransformMap[internalToCipRank] != finalValue:
-						raise Exception('Error on _redefineChelatesTypes: new ranks couldnt be set')
-	
-				self.__newRankTypesTransformMap[internalToCipRank] = finalValue
-
-		auxTypes = []
-		for key in rankCounting:
-			for i in range(rankCounting[key]):
-				auxTypes.append(rankTypesTransformMap[key])
-
-		#rever isso aqui tambem
-		auxTypes.sort()
-		for i in range(len(auxTypes)):
-			rank[i] = auxTypes[i]
-		for i in range(len(chelatesList)):
-			for j in range(len(chelatesList[i])):
-				chelatesList[i][j] = auxTypes.index(rankTypesTransformMap[oldMap[chelatesList[i][j]]])
-				auxTypes[chelatesList[i][j]] = -1
-
+		
+		return prioritiesTransformMap
 
 	def _calculateNewMapBetweenAtomsAndTypes(self, rank):
 		newMap = {}
@@ -312,441 +446,6 @@ class FormulaHandling:
 			del oldRankCounting[maxKey]
 				
 		return newMap
-
-			
-	def _chelationsConflict(self, chelations):
-		# two chelates pointing to the same ligand
-		i = 0
-		j = 0
-		while i < len(chelations) - 1:
-			j = i + 1
-			while j < len(chelations):
-				for chelI in chelations[i]:
-					for chelJ in chelations[j]:
-						if chelI == chelJ:
-							return True
-				j+=1
-			i+=1
-		
-		return False
-
-
-	def _dictFindKeyByValue(self, dict, search_value):
-		for key, value in dict.items():
-		    if value == search_value:
-        		return key
-
-	def _calculateFormula(self, rank):
-		rankCounting = Counter(rank)
-		rankCountingElems = []
-		for comp in rankCounting:
-			rankCountingElems.append(rankCounting[comp])
-
-		rankCountingElems.sort()
-		ligandsAmount = list(rankCountingElems)
-		ligandsAmount.reverse()
-		ligandTypes = alphabet[:len(ligandsAmount)]
-		molecularFormula = ""
-		i = 0		
-		while i < len(ligandTypes):
-			if ligandsAmount[i] == 1:
-				molecularFormula += ligandTypes[i]
-			else:
-				molecularFormula += ligandTypes[i] + str(ligandsAmount[i])
-			i+=1
-		return molecularFormula
-
-	#from formula: last term must be the largest and first the lowest
-	def _advanceFormula(self,formula):
-		types = justLetters(formula)
-		deltaIndex = alphabet.index(types[len(types)-1]) - alphabet.index(types[0]) + 1
-		newFormula = ''
-		for iFor in formula:
-			if iFor.isdigit():
-				newFormula += iFor
-				continue
-			newFormula += alphabet[deltaIndex + alphabet.index(iFor)]
-	
-		return newFormula
-	
-	def _formulasCanonRank(self, formula):
-		i = 0
-		k = 0
-		rankCanon = []
-		while i < len(formula):
-			if formula[i].isdigit():
-				for iR in range(int(float(formula[i]))-1):
-					rankCanon.append(k-1)
-			else:
-				rankCanon.append(k)
-				k+=1
-			i+=1
-		return rankCanon
-	
-	# Don't trade (False) if formula1 should come first
-	def _formulasConflictTrade(self, formula1, formula2):
-		canon1 = self._formulasCanonRank(formula1)
-		canon2 = self._formulasCanonRank(formula2)
-	
-		if len(canon1) != len(canon2):
-			return len(canon1) > len(canon2)
-		else:
-			i = 0
-			while i < len(canon1):
-				if canon1[i] != canon2[i]:
-					return canon1[i] > canon2[i]
-				i+=1
-			
-			if alphabet.index(formula1[0]) != alphabet.index(formula2[0]):
-				return alphabet.index(formula1[0]) > alphabet.index(formula2[0])
-			else:
-				raise Exception('Error on formulasConflictTrade - check input for errors')
-
-		
-	
-
-		
-		
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-##############################################################################################################################
-##############################################################################################################################
-##############################################################################################################################
-##############################################################################################################################
-##############################################################################################################################
-##############################################################################################################################
-##############################################################################################################################
-##############################################################################################################################
-##############################################################################################################################
-##############################################################################################################################
-##############################################################################################################################
-##############################################################################################################################
-##############################################################################################################################
-##############################################################################################################################
-
-
-
-
-class GenerateAllFormulas:
-	"""Class to enumerate all formulas with all possible chelations"""
-	# How to use
-	#objG = GenerateAllFormulas()
-	#objG.generateAllFormulas(8)
-	#objG.printFile()
-
-	def __init__(self):
-		self.__allFormulas = []
-		self.__allReferences = []
-		self.__allChelations = []
-
-	def generateAllFormulas(self, size):
-		allComb = list(itertools.combinations_with_replacement(list(range(0,size)), size))
-		for perm in allComb: # monodentates
-			objP = FormulaHandling()
-			objP.generateMolecularFormula(perm, [])
-			if not objP.getFormula() in self.__allFormulas:
-				self.__allFormulas.append(objP.getFormula())
-				self.__allReferences.append(objP.getReferenceLine())
-				self.__allChelations.append(['None'])
-				
-		allChelComb = self._calculateAllChelateCombinations(size)
-		monodentateReferences = list(self.__allReferences)
-		for ref in monodentateReferences:  #use monodentates as base to chelations definitions
-			for chelCom in allChelComb:
-				chelList = []
-				for chelComI in chelCom:
-					chelReach = list(range(0,size))
-					chelList.append(list(itertools.combinations(chelReach, chelComI)))
-
-				allChelationsToFormulas = list(itertools.product(*chelList))
-				for chelations in allChelationsToFormulas:
-					try:
-						objC = FormulaHandling()
-						objC.generateMolecularFormula(ref, chelations)
-						if not objC.getFormula() in self.__allFormulas:
-							self.__allFormulas.append(objC.getFormula())
-							self.__allReferences.append(objC.getReferenceLine())
-							self.__allChelations.append(objC.getCanonChelation())
-		
-					except Exception as e:
-						if str(e) == "chelations not well defined":
-							pass
-						else:
-							print(" Error:  ",str(e))
-
-	def redefineFormulas(self):
-		#Modify the function: self.printFile to its final form
-		allFormFile = open("allFormulasRedefined.py", "w")
-		allFormFile.write("allFormList = []\n")
-	
-		ncoord = 1
-		allFormFile.write("aux1FormList = []\n")
-		for i in range(len(allFormList1)):
-			objFormula = FormulaHandling()
-			if allFormList1[i][2] == ['None']:
-				objFormula.generateMolecularFormula(allFormList1[i][1],[])
-			else:
-				objFormula.generateMolecularFormula(allFormList1[i][1],allFormList1[i][2])
-			allFormList1[i][1] = objFormula.getReferenceLine()
-			allFormList1[i][2] = objFormula.getCanonChelation()
-			objFormula2 = FormulaHandling()
-			if allFormList1[i][2] == ['None']:
-				objFormula2.generateEnumerationFormula(allFormList1[i][1],[])
-			else:
-				objFormula2.generateEnumerationFormula(allFormList1[i][1],allFormList1[i][2])
-		
-			allFormFile.write("aux1FormList.append([{},\'{}\',\'{}\',{},{}])\n".format(
-			ncoord,
-			allFormList1[i][0],
-			objFormula2.getFormula(),
-			objFormula.getReferenceLine(),
-			objFormula.getCanonChelation()))
-		allFormFile.write("allFormList.append(aux1FormList)\n")
-	
-		ncoord = 2
-		allFormFile.write("aux2FormList = []\n")
-		for i in range(len(allFormList2)):
-			objFormula = FormulaHandling()
-			if allFormList2[i][2] == ['None']:
-				objFormula.generateMolecularFormula(allFormList2[i][1],[])
-			else:
-				objFormula.generateMolecularFormula(allFormList2[i][1],allFormList2[i][2])
-			allFormList2[i][1] = objFormula.getReferenceLine()
-			allFormList2[i][2] = objFormula.getCanonChelation()
-			objFormula2 = FormulaHandling()
-			if allFormList2[i][2] == ['None']:
-				objFormula2.generateEnumerationFormula(allFormList2[i][1],[])
-			else:
-				objFormula2.generateEnumerationFormula(allFormList2[i][1],allFormList2[i][2])
-		
-			allFormFile.write("aux2FormList.append([{},\'{}\',\'{}\',{},{}])\n".format(
-			ncoord,
-			allFormList2[i][0],
-			objFormula2.getFormula(),
-			objFormula.getReferenceLine(),
-			objFormula.getCanonChelation()))
-		allFormFile.write("allFormList.append(aux2FormList)\n")
-	
-		ncoord = 3
-		allFormFile.write("aux3FormList = []\n")
-		for i in range(len(allFormList3)):
-			objFormula = FormulaHandling()
-			if allFormList3[i][2] == ['None']:
-				objFormula.generateMolecularFormula(allFormList3[i][1],[])
-			else:
-				objFormula.generateMolecularFormula(allFormList3[i][1],allFormList3[i][2])
-			allFormList3[i][1] = objFormula.getReferenceLine()
-			allFormList3[i][2] = objFormula.getCanonChelation()
-			objFormula2 = FormulaHandling()
-			if allFormList3[i][2] == ['None']:
-				objFormula2.generateEnumerationFormula(allFormList3[i][1],[])
-			else:
-				objFormula2.generateEnumerationFormula(allFormList3[i][1],allFormList3[i][2])
-	
-			allFormFile.write("aux3FormList.append([{},\'{}\',\'{}\',{},{}])\n".format(
-			ncoord,
-			allFormList3[i][0],
-			objFormula2.getFormula(),
-			objFormula.getReferenceLine(),
-			objFormula.getCanonChelation()))
-		allFormFile.write("allFormList.append(aux3FormList)\n")
-	
-		ncoord = 4
-		allFormFile.write("aux4FormList = []\n")
-		for i in range(len(allFormList4)):
-			objFormula = FormulaHandling()
-			if allFormList4[i][2] == ['None']:
-				objFormula.generateMolecularFormula(allFormList4[i][1],[])
-			else:
-				objFormula.generateMolecularFormula(allFormList4[i][1],allFormList4[i][2])
-			allFormList4[i][1] = objFormula.getReferenceLine()
-			allFormList4[i][2] = objFormula.getCanonChelation()
-			objFormula2 = FormulaHandling()
-			if allFormList4[i][2] == ['None']:
-				objFormula2.generateEnumerationFormula(allFormList4[i][1],[])
-			else:
-				objFormula2.generateEnumerationFormula(allFormList4[i][1],allFormList4[i][2])
-		
-			allFormFile.write("aux4FormList.append([{},\'{}\',\'{}\',{},{}])\n".format(
-			ncoord,
-			allFormList4[i][0],
-			objFormula2.getFormula(),
-			objFormula.getReferenceLine(),
-			objFormula.getCanonChelation()))
-		allFormFile.write("allFormList.append(aux4FormList)\n")
-	
-		ncoord = 5
-		allFormFile.write("aux5FormList = []\n")
-		for i in range(len(allFormList5)):
-			objFormula = FormulaHandling()
-			if allFormList5[i][2] == ['None']:
-				objFormula.generateMolecularFormula(allFormList5[i][1],[])
-			else:
-				objFormula.generateMolecularFormula(allFormList5[i][1],allFormList5[i][2])
-			allFormList5[i][1] = objFormula.getReferenceLine()
-			allFormList5[i][2] = objFormula.getCanonChelation()
-			objFormula2 = FormulaHandling()
-			if allFormList5[i][2] == ['None']:
-				objFormula2.generateEnumerationFormula(allFormList5[i][1],[])
-			else:
-				objFormula2.generateEnumerationFormula(allFormList5[i][1],allFormList5[i][2])
-		
-			allFormFile.write("aux5FormList.append([{},\'{}\',\'{}\',{},{}])\n".format(
-			ncoord,
-			allFormList5[i][0],
-			objFormula2.getFormula(),
-			objFormula.getReferenceLine(),
-			objFormula.getCanonChelation()))
-		allFormFile.write("allFormList.append(aux5FormList)\n")
-	
-		ncoord = 6
-		allFormFile.write("aux6FormList = []\n")
-		for i in range(len(allFormList6)):
-			objFormula = FormulaHandling()
-			if allFormList6[i][2] == ['None']:
-				objFormula.generateMolecularFormula(allFormList6[i][1],[])
-			else:
-				objFormula.generateMolecularFormula(allFormList6[i][1],allFormList6[i][2])
-			allFormList6[i][1] = objFormula.getReferenceLine()
-			allFormList6[i][2] = objFormula.getCanonChelation()
-			objFormula2 = FormulaHandling()
-			if allFormList6[i][2] == ['None']:
-				objFormula2.generateEnumerationFormula(allFormList6[i][1],[])
-			else:
-				objFormula2.generateEnumerationFormula(allFormList6[i][1],allFormList6[i][2])
-		
-			allFormFile.write("aux6FormList.append([{},\'{}\',\'{}\',{},{}])\n".format(
-			ncoord,
-			allFormList6[i][0],
-			objFormula2.getFormula(),
-			objFormula.getReferenceLine(),
-			objFormula.getCanonChelation()))
-		allFormFile.write("allFormList.append(aux6FormList)\n")
-	
-		ncoord = 7
-		allFormFile.write("aux7FormList = []\n")
-		for i in range(len(allFormList7)):
-			objFormula = FormulaHandling()
-			if allFormList7[i][2] == ['None']:
-				objFormula.generateMolecularFormula(allFormList7[i][1],[])
-			else:
-				objFormula.generateMolecularFormula(allFormList7[i][1],allFormList7[i][2])
-			allFormList7[i][1] = objFormula.getReferenceLine()
-			allFormList7[i][2] = objFormula.getCanonChelation()
-			objFormula2 = FormulaHandling()
-			if allFormList7[i][2] == ['None']:
-				objFormula2.generateEnumerationFormula(allFormList7[i][1],[])
-			else:
-				objFormula2.generateEnumerationFormula(allFormList7[i][1],allFormList7[i][2])
-		
-			allFormFile.write("aux7FormList.append([{},\'{}\',\'{}\',{},{}])\n".format(
-			ncoord,
-			allFormList7[i][0],
-			objFormula2.getFormula(),
-			objFormula.getReferenceLine(),
-			objFormula.getCanonChelation()))
-		allFormFile.write("allFormList.append(aux7FormList)\n")
-	
-		ncoord = 8
-		allFormFile.write("aux8FormList = []\n")
-		for i in range(len(allFormList8)):
-			objFormula = FormulaHandling()
-			if allFormList8[i][2] == ['None']:
-				objFormula.generateMolecularFormula(allFormList8[i][1],[])
-			else:
-				objFormula.generateMolecularFormula(allFormList8[i][1],allFormList8[i][2])
-			allFormList8[i][1] = objFormula.getReferenceLine()
-			allFormList8[i][2] = objFormula.getCanonChelation()
-			objFormula2 = FormulaHandling()
-			if allFormList8[i][2] == ['None']:
-				objFormula2.generateEnumerationFormula(allFormList8[i][1],[])
-			else:
-				objFormula2.generateEnumerationFormula(allFormList8[i][1],allFormList8[i][2])
-		
-			allFormFile.write("aux8FormList.append([{},\'{}\',\'{}\',{},{}])\n".format(
-			ncoord,
-			allFormList8[i][0],
-			objFormula2.getFormula(),
-			objFormula.getReferenceLine(),
-			objFormula.getCanonChelation()))
-		allFormFile.write("allFormList.append(aux8FormList)\n")
-	
-		allFormFile.close()
-		
-	
-
-	def printFile(self):
-		allFormFile = open("allFormulas.py", "w")
-		allFormFile.write("allFormList = []\n")
-		for i in range(len(self.__allFormulas)):
-			allFormFile.write("allFormList.append([\'{}\',{},{}])\n".format(
-			self.__allFormulas[i],
-			self.__allReferences[i],
-			self.__allChelations[i]))
-			
-		allFormFile.close()			
-
-	def _calculateAllChelateCombinations(self,size):
-		allChelComb = []
-		chelNumber = 1 
-		while chelNumber <= int(math.floor(size/2)):
-			allChel = list(itertools.combinations_with_replacement(list(range(2,size + 1)), chelNumber))
-			for chelI in allChel:
-				sum = 0
-				for iSum in chelI:
-					sum += iSum
-				if sum <= size:
-					allChelComb.append(chelI)
-			chelNumber += 1
-		return allChelComb
-
-
-
-#########################################################################
-#########################################################################
-# TESTE ALL FORM LIST
-#for x in allFormList:
-#	len(x)
-#	for y in x:
-#		if y == 0:
-#			continue
-#		if len(y) > 3:
-#			obj1 = FormulaHandling()
-#			obj1.generateMolecularFormula(y[3], y[4])
-#			print(y)
-#			if y[3] != obj1.getReferenceLine():
-#				print("Problem on monodentates definitions")
-#				exit()
-#			if y[4] != obj1.getCanonChelation():
-#				print("Problem on chelate definitions")
-#				exit()
-#########################################################################
-#########################################################################
 
 
 if __name__ ==  "__main__":
