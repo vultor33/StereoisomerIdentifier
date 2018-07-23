@@ -23,66 +23,50 @@ public:
 
 	void identify(const std::string &fileName_in);
 
-	void identifyMonoVersion(const std::string &fileName);
-
 	void generateAllMol(std::string &fileName, int geoCode);
 
 private:
+	AuxMath auxMath_;
+	double DELTA_CUT;
+
+	// Read input
 	Geometries geo_;
-	std::ofstream cppOut_;// ((fileName + ".log").c_str());
+	std::ofstream cppOut_;
 	std::string molecularFormula;
 	std::vector<int> atomTypesCahnIngoldPrelog;
 	std::vector< std::vector<int> > chelates;
 
+	//Find shape
+	int geoCode;
+	double rmsdShape;
 
-	std::string setLabel(int i);
+	//Find stereoisomer
+	int steroisomerIndex;
+	std::string stereoLetter;
+	std::vector<int> idealTypes;
+	std::vector< std::vector<int> > idealChelates;
 
-	void reescaleMetalLigandDistancesToOne(std::vector<CoordXYZ> &coord);
 
-	AuxMath auxMath_;
+	std::vector<CoordXYZ> readInput(const std::string &fileName);
 
-	std::vector<CoordXYZ> readInput(
-		const std::string &fileName, 
-		std::string &formula,
-		std::vector<int> &atomTypesCahnIngoldPrelog,
-		std::vector< std::vector<int> > & chelates);
+	std::vector<CoordXYZ> findShape(const std::vector<CoordXYZ> &coordMol);
 
-	std::vector<CoordXYZ> readInputMonoVersion(
+	bool calculateEndConditionsWriteIfIsFinished(
 		const std::string &fileName,
-		std::string &formula,
-		std::vector<int> &atomTypesCahnIngoldPrelog);
-
-
-	std::vector<CoordXYZ> findShape(
-		const std::vector<CoordXYZ> &coordMol,
-		int &geoCode,
-		double &rmsdShape);
+		const std::vector<CoordXYZ> &coordMol);
 
 	std::string findStereoisomer(
 		//input
 		std::vector<CoordXYZ> &idealGeo,//add types and chelates
-		const std::string &molecularFormula,
-		const int geoCode,
 		//CSD
-		std::vector<CoordXYZ> &coordMol,//remove metal, add types and chelates
-		std::vector<int> &atomTypesCahnIngoldPrelog,
-		std::vector< std::vector<int> > &chelates,
+		std::vector<CoordXYZ> &coordMol);//remove metal, add types and chelates
 		//output
-		std::vector<int> &idealTypes,
-		std::vector< std::vector<int> > &idealChelates,
-		int &steroisomerIndex,
-		std::string &stereoLetter);
 
-	std::string findStereoisomerMonoVersion(
-		const std::string &molecularFormula,
-		const int geoCode,
-		int &minimumLine,
-		std::string &stereoLetter,
-		const std::vector<CoordXYZ> &idealGeo,
-		std::vector<CoordXYZ> &coordMol,
-		std::vector<int> &atomTypes,
-		std::vector<int> &atomTypesCahnIngoldPrelog);
+	void writeOutput(const std::string &fileName, std::string &isomerLine);
 
+	std::string setLabel(int i);
+
+	void reescaleMetalLigandDistancesToOne(std::vector<CoordXYZ> &coord);
 
 	std::vector< std::string > readAllPermutations(
 		std::string fileName,

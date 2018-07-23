@@ -1,10 +1,10 @@
-#from RunStereoisomerIdentifier import testRunStereoisomerIdentifier
-#testRunStereoisomerIdentifier()
+from RunStereoisomerIdentifier import testRunStereoisomerIdentifier
+testRunStereoisomerIdentifier()
 
 #from AllMolecularFormulasGenerator import testAllMolecularFormulasGenerator
 #testAllMolecularFormulasGenerator()
 
-from RunStereoisomerIdentifier import RunStereoisomerIdentifier
+#from RunStereoisomerIdentifier import RunStereoisomerIdentifier
 #pathInput = "G:\\!CSD-database\\"
 #pathOutput = "TestFiles\\"
 #extension = ".search1.mol2"
@@ -12,11 +12,11 @@ from RunStereoisomerIdentifier import RunStereoisomerIdentifier
 #run_.runAllFilesFromInputDirectoryWithLimits(306,307)
 
 
-pathInput = "G:\\!CSD-database\\"
-pathOutput = "running\\"
-extension = ".search1.mol2"
-calcFilesTemp = [
-			"ADUREX"]
-run_ = RunStereoisomerIdentifier(pathInput,pathOutput, extension)
-run_.activateKeepIdentifierFiles()
-run_.runFromList(calcFilesTemp)
+#pathInput = "G:\\!CSD-database\\"
+#pathOutput = "running\\"
+#extension = ".search1.mol2"
+#calcFilesTemp = [
+#			"ADUREX"]
+#run_ = RunStereoisomerIdentifier(pathInput,pathOutput, extension)
+#run_.activateKeepIdentifierFiles()
+#run_.runFromList(calcFilesTemp)
