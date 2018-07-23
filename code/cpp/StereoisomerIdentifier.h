@@ -9,6 +9,9 @@
 
 #include "AuxMath.h"
 #include "Coordstructs.h"
+#include "Geometries.h"
+#include "MarquesEnantiomers.h"
+#include "ReadWriteFormats.h"
 
 
 
@@ -25,7 +28,12 @@ public:
 	void generateAllMol(std::string &fileName, int geoCode);
 
 private:
-	std::string fileName;
+	Geometries geo_;
+	std::ofstream cppOut_;// ((fileName + ".log").c_str());
+	std::string molecularFormula;
+	std::vector<int> atomTypesCahnIngoldPrelog;
+	std::vector< std::vector<int> > chelates;
+
 
 	std::string setLabel(int i);
 

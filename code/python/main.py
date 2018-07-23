@@ -16,7 +16,7 @@ pathInput = "G:\\!CSD-database\\"
 pathOutput = "running\\"
 extension = ".search1.mol2"
 calcFilesTemp = [
-			"JEKKAL"]
+			"ADUREX"]
 run_ = RunStereoisomerIdentifier(pathInput,pathOutput, extension)
 run_.activateKeepIdentifierFiles()
 run_.runFromList(calcFilesTemp)

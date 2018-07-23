@@ -14,20 +14,16 @@ StereoisomerIdentifier::StereoisomerIdentifier(){}
 
 StereoisomerIdentifier::~StereoisomerIdentifier(){}
 
-void StereoisomerIdentifier::identify(const string &fileName_in)
+void StereoisomerIdentifier::identify(const string &fileName)
 {
-	fileName = fileName_in;
-	Geometries geo_;
-	ofstream cppOut_((fileName + ".log").c_str());
-	string molecularFormula;
-	vector<int> atomTypesCahnIngoldPrelog;
-	vector< vector<int> > chelates;
-
+	cppOut_.open((fileName + ".log").c_str());
 	vector<CoordXYZ> coordMol = readInput(
 		fileName,
 		molecularFormula,
 		atomTypesCahnIngoldPrelog,
 		chelates);
+
+
 
 	int geoCode;
 	double rmsd;
@@ -656,7 +652,7 @@ void StereoisomerIdentifier::printMol(
 	std::string letter,
 	const int index)
 {
-	fileName = generateStereoisomerFileName(letter, index);
+	string fileName = generateStereoisomerFileName(letter, index);
 
 	//WATCH ATOM TYPES OF THE CHELATES POINTS
 	ofstream out_;
