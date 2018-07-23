@@ -20,6 +20,7 @@ class RunStereoisomerIdentifier:
 		self.__extension = extension
 		self.__calcFiles = []
 		self._openCalculatingFile()
+		self.__keepIdentifierFiles = False
 
 	def __del__(self):
 		if not self.__calculatingFile.closed:
@@ -27,6 +28,9 @@ class RunStereoisomerIdentifier:
 
 	def getOutputFileName(self):
 		return self.__OUTPUT_FILE_NAME
+
+	def activateKeepIdentifierFiles(self):
+		self.__keepIdentifierFiles = True
 		
 	def runFromList(self, csdRefcodesList):
 		self._buildInputFileNames(csdRefcodesList, self.__extension)
@@ -52,13 +56,15 @@ class RunStereoisomerIdentifier:
 
 	def _calcFile(self, molFile):
 			try:
-				obj1 = StereoisomerIdentifier(molFile)
-				#obj1.keepIdentifierFiles() fornecer opcoes para ativar ou desativar isso aqui
-				obj1.runStereoisomerIdentifierRmsd(self.__calculatingFile)
+				stereoIdent_ = StereoisomerIdentifier(molFile)
+				if self.__keepIdentifierFiles: 
+					stereoIdent_.activateKeepIdentifier()
+				
+				stereoIdent_.runStereoisomerIdentifierRmsd(self.__calculatingFile)
 
 			except Exception as e:
 				if str(e) == self.__errorMessages_.getCipApplicationError():
-					self.__calculatingFile.write("E.rdkit")  # UNIFICAR TODAS AS MENSAGENS DE ERRO
+					self.__calculatingFile.write("E.rdkit")
 				elif str(e) == self.__errorMessages_.getNoMetalError():
 					self.__calculatingFile.write("E.0Metals")
 				else:

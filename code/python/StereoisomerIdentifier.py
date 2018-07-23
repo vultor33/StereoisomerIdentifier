@@ -19,10 +19,13 @@ class StereoisomerIdentifier:
 		self.__cppExec_.setKeepIdentierFiles(False)
 		self.__bimetallicAnalysis_ = BimetallicAnalysis(self.__molFileHandling_, self.__equivalenceRank)
 
+	def activateKeepIdentifier(self):
+		self.__cppExec_.setKeepIdentierFiles(True)
+
 	def runStereoisomerIdentifierRmsd(self, outputFile_):
 		try:
-			bimetallicWriteMessage = self.__bimetallicAnalysis_.checkIfItIsDimmetallic()
-			outputFile_.write(bimetallicWriteMessage)
+			bimetallicWriteSummary = self.__bimetallicAnalysis_.checkIfItIsDimmetallic()
+			outputFile_.write(bimetallicWriteSummary)
 			
 		except:
 			outputFile_.write("Mix;")
