@@ -23,11 +23,11 @@ ReadInput::ReadInput(int argc, char *argv[])
 	}
 	else
 	{
-		//fileName = "OC-6-a4bc.csv";
-		//option = "generateAllMol";
-		//geoCode = 60;
-		fileName = "V1-LEMCAH.search1-cpp.inp";
-		option = "Identify";
+		fileName = "OC-6-a3bcd.csv";
+		option = "generateAllMol";
+		geoCode = 60;
+		//fileName = "V1-LEMCAH.search1-cpp.inp";
+		//option = "Identify";
 	}
 
 
