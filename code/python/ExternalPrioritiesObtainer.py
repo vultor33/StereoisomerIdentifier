@@ -33,16 +33,15 @@ class ExternalPrioritiesObtainer:
 
 	def _loadMolFormat(self,fileName):
 		self.__mol = Chem.MolFromMolFile(fileName + '.mol', removeHs = False)
-		
-	def _loadMol2Format(self,fileName):		
-		self.__mol = Chem.MolFromMol2File(fileName + '.mol2', removeHs = False)
 
 	def _applyCipRules(self):
 		Chem.AssignStereochemistry(self.__mol, flagPossibleStereoCenters=True)
 		self.__priorities = [int(a.GetProp('_CIPRank')) for a in self.__mol.GetAtoms()]
+		self._reverseNumbers()
 		
-	def _applySchneiderRules(self):
-		self.__priorities = list(Chem.CanonicalRankAtoms(self.__mol, breakTies=False))
-		
+	def _reverseNumbers(self):
+		maxPriority = max(self.__priorities)
+		for i in range(len(self.__priorities)):
+			self.__priorities[i] = maxPriority - self.__priorities[i] 
 
 

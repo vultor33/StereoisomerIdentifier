@@ -19,10 +19,10 @@ class PrioritiesObtainer:
 		self._findChelations(iMetal)
 		self._identifierLimitationsExceptions()
 
-		externalPriorities = self.getExternalPrioritiesOfMetalI()
+		externalPrioritiesI = self.getExternalPrioritiesOfMetalI()
 
-		self._generateMolecularFormulas(externalPriorities)
-		self._defineFinalPriorities(externalPriorities)	
+		self._generateMolecularFormulas(externalPrioritiesI)
+		self._defineFinalPriorities(externalPrioritiesI)	
 
 	def calculateOnlyExternalPriorities(self, iMetal):
 		self._findChelations(iMetal)
@@ -47,6 +47,7 @@ class PrioritiesObtainer:
 		priorities = []
 		for i in self.__ligandsBondedToMetalI:
 			priorities.append(self.__externalPriorites[i-1])
+		
 		return priorities
 				
 	
