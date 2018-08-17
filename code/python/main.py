@@ -13,11 +13,17 @@
 
 
 from RunStereoisomerIdentifier import RunStereoisomerIdentifier
-pathInput = "TestFiles\\"
+pathInput = "G:\\!CSD-database\\"
 pathOutput = "TestFiles\\"
 extension = ".search1.mol2"
 calcFilesTemp = [
-			"ATIWIK"]
+			"COXRAJ"]
 run_ = RunStereoisomerIdentifier(pathInput,pathOutput, extension)
 run_.activateKeepIdentifierFiles()
 run_.runFromList(calcFilesTemp)
+
+
+
+
+
+
