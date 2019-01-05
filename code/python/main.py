@@ -1,26 +1,19 @@
-#from RunStereoisomerIdentifier import testRunStereoisomerIdentifier
-#testRunStereoisomerIdentifier()
-
-#from AllMolecularFormulasGenerator import testAllMolecularFormulasGenerator
-#testAllMolecularFormulasGenerator()
-
-#from RunStereoisomerIdentifier import RunStereoisomerIdentifier
-#pathInput = "G:\\!CSD-database\\"
-#pathOutput = "TestFiles\\"
-#extension = ".search1.mol2"
-#run_ = RunStereoisomerIdentifier(pathInput,pathOutput, extension)
-#run_.runAllFilesFromInputDirectoryWithLimits(306,307)
-
-
+import sys
 from RunStereoisomerIdentifier import RunStereoisomerIdentifier
-pathInput = "G:\\!CSD-database\\"
-pathOutput = "TestFiles\\"
-extension = ".search1.mol2"
-calcFilesTemp = [
-			"COXRAJ"]
-run_ = RunStereoisomerIdentifier(pathInput,pathOutput, extension)
-run_.activateKeepIdentifierFiles()
-run_.runFromList(calcFilesTemp)
+
+typedCommands = sys.argv
+
+if len(typedCommands) != 2:
+    print('Input format:')
+    print('python main.py [fileName]')
+else:
+    pathInput = ""
+    pathOutput = ""
+    extension = ""
+    calcFilesTemp = [str(typedCommands[1])]
+    run_ = RunStereoisomerIdentifier(pathInput,pathOutput, extension)
+    run_.activateKeepIdentifierFiles()
+    run_.runFromList(calcFilesTemp)
 
 
 
