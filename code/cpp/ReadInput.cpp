@@ -1,6 +1,7 @@
 #include "ReadInput.h"
 
 #include <sstream>
+#include <iostream>
 
 using namespace std;
 
@@ -23,6 +24,7 @@ ReadInput::ReadInput(int argc, char *argv[])
 	}
 	else
 	{
+		cout << "DEFAULT OPTIONS" << endl;
 		fileName = "OC-6-a3bcd.csv";
 		option = "generateAllMol";
 		geoCode = 60;

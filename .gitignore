@@ -9,5 +9,11 @@ code/python/rotations*
 code/python/StereoisomerList*
 code/python/*-enumeration*
 *.log
+*.o
+*.exe
+*.inp
+*StereoisomerList*
+
+
 
 
