@@ -1,4 +1,3 @@
-
 INSTALACAO DO StereoisomerIdentifier
 
 O StereoisomerIdentifier é composto por códigos na linguagem C++ e Python.
@@ -33,34 +32,21 @@ conda install --channel https://conda.anaconda.org/rdkit rdkit
 
 EXECUCAO
 
-Mova a pasta StereoisomerList para a pasta de trabalho
+Ative o ambiente
+conda activate StereoIdent
 
-(Essa pasta foi fornecida a parte pelos desenvolvedores)
-
-
-
-INSTALACAO DO PYTHON (Windows)
-
-Resumo: Instalar o RDKIT no windows.
-
-Página de referência: http://www.rdkit.org/docs/Install.html
-Primeiro eu instalei miniconda.
-Abri o conda e executei o seguinte comando:
-conda create --name test-rdkit --channel https://conda.anaconda.org/rdkit rdkit python=3.6.1
+Mova a pasta StereoisomerList para a pasta de trabalho (Essa pasta foi fornecida a parte pelos desenvolvedores)
+Na pasta python digite:
+python main.py [nome do arquivo]
+O resultado sera apresentado no arquivo calculating.csv
 
 
-EXECUTANDO O IDENTIFICADOR
 
-1. Compilar o código na pasta cpp
-2. Mover o "StereoisomerIdentifierRmsd.exe" para a pasta do python
-3. Abrir o Anaconda Prompt e deslocar para essa pasta
-4. Executar:
-	conda activate test-rdkit
-5. Em seguida, executar:
-	python main.py
 
-Ele está configurado para identificar todos os arquivos .mol2 que estiverem
-dentro da pasta.
+ATENCAO - O CODIGO ESTA CONFIGURADO PARA LINUX
+- PARA WINDOWS - E NECESSARIO MUDANCAS NO:
+               -  StereoiosomerIdentifier.cpp :: filePath (trocar a direcao da barra)
+               - CppExecutableHandling.py no windows nao tem esse ponto: ./StereoisomerIdentifierRmsd.exe                           
 
 
 

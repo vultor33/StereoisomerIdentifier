@@ -662,13 +662,13 @@ vector<int> StereoisomerIdentifier::stringToPermutation(string entryString, size
 
 std::string StereoisomerIdentifier::filePath(int coordination, const std::string &shape)
 {
-	string file = "Stereoisomerlist\\";
+	string file = "Stereoisomerlist/";
 	stringstream convert;
 	string coordString;
 	convert << coordination;
 	convert >> coordString;
-	file += "CN" + coordString + "\\";
-	file += shape + "\\";
+	file += "CN" + coordString + "/";
+	file += shape + "/";
 	return file;
 }
 

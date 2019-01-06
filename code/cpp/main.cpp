@@ -15,7 +15,6 @@ int main(int argc, char *argv[])
 	string fileName = readInp_.getFileName();
 	if (readInp_.getOption() == "Identify")
 	{
-		cout << "identificando" << endl;
 		stereo.identify(fileName);
 	}
 	else if (readInp_.getOption() == "generateAllMol")
