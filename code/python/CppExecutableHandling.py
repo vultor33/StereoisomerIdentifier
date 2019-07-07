@@ -42,7 +42,7 @@ class CppExecutableHandling:
 			return "a;a-L-1;0;"
 		
 		self._writeCppInput(iMetal, prior_)
-		execCommand = "./StereoisomerIdentifierRmsd.exe " + self.__molFileHandling_.getBaseFileName() + "-cpp.inp"
+		execCommand = "StereoisomerIdentifierRmsd.exe " + self.__molFileHandling_.getBaseFileName() + "-cpp.inp"
 		subprocess.call(execCommand, shell=True)
 		cppResultSummary = self._readCppOutput(prior_)
 
