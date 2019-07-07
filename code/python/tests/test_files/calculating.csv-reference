@@ -1,0 +1,12 @@
+CSD;Info;Metal;Formula;ID;RMSD
+tests\test_files\AVIYAH;Mix;Tl1;a;a-L-1;0;
+tests\test_files\TALWOS;DimetalNF;Al1;a2(AB);a2bc-T-4-G-1;0.11308;Al2;a2bc;a2bc-T-4-G-1;0.0750794;
+tests\test_files\BOGNIV01;Mix;Cu1;a(A2BC);a2bcd-SPY-5-R-1;0.112602;Cu2;a(A2BC);a2bcd-SPY-5-S-1;0.110709;Cu1A;a(A2BC);a2bcd-SPY-5-S-1;0.112602;Cu2A;a(A2BC);a2bcd-SPY-5-R-1;0.110714;
+tests\test_files\FAHWAM;Dimetal;Ru1;a3b;a3b-T-4-G-1;0.0384491;Ru1A;a3b;a3b-T-4-G-1;0.0384365;
+tests\test_files\ITADAK;Mix;Ag1;a(A2B);a2bc-vTBPY-4-G-2;0.095672;
+tests\test_files\LILHIZ;E.rdkit
+tests\test_files\NAGWIB;Mix;Sn1;a2b2c;a2b2c-TBPY-5-G-1;0.113918;
+tests\test_files\OTETOY;Dimetal;Fe1;a2b(A2B);a2b2cd-OC-6-G-3;0.109155;Fe1D;a2b(A2B);a2b2cd-OC-6-G-3;0.109155;
+tests\test_files\PIDYOR;Mix;Mn1;a2(AB)2;a2(AB)2-OC-6-G-3;0.0946147;
+tests\test_files\QEZCUU;E.rdkit
+tests\test_files\VACGUC01;Mix;Pd1;a2bc;a2bc-SP-4-G-2;0.00721951;
