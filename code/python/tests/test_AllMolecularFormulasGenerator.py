@@ -7,7 +7,8 @@ def test_AllMolecularFormulasGenerator():
     util_ = Utilities()
     allFormulas_ = AllMolecularFormulasGenerator()
     outputFileName = allFormulas_.getOutputFileName()
-    testFilePath = os.path.join("TestFiles", outputFileName + '-reference')
+    testFilePath = os.path.join("tests", "test_files")
+    testFilePath = os.path.join(testFilePath, outputFileName + '-reference')
     assert(util_.isOutOfOrderFilesEqual(outputFileName,testFilePath))
 
 

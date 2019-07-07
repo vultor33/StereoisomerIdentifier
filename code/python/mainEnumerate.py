@@ -12,8 +12,8 @@ enumeratedFormulas = []
 
 countingFile = open("{}-counting.csv".format(geoCode),"w")
 for i in range(len(allFormList[ncoord])):
-#	if i != 1:
-#		continue
+	if i != 1:
+		continue
 	print('i:   ',i,'  formula:   ',allFormList[ncoord][i][1], '  enumF:  ',allFormList[ncoord][i][2])
 
 	if allFormList[ncoord][i][2] in enumeratedFormulas:
