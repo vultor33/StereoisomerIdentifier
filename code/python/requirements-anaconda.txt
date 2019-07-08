@@ -1,0 +1,9 @@
+Crie um ambiente (e.g. "conda create -n StereoIdent")
+Ative o ambiente (e.g. "conda activate StereoIdent")
+
+Modulos a serem instalados:
+
+conda install -c rdkit rdkit 
+conda install spyder (IDE)
+conda install -c anaconda pytest 
+
