@@ -16,6 +16,10 @@ Mova o executável StereoisomerIdentifierRmsd.exe para a pasta code/python
 Em windows a compilação do código C++ pode ser feita com o compilador da sua preferência,
 nesse caso, basta adicionar todos os arquivos em sua IDE e compilar.
 
+ATENCAO - o codigo de C++ precisa de uma pasta chamada Stereoisomerlist para rodar, a falta da pasta
+pode levar a comportamento imprevisivel.
+
+
 INSTALACAO PYTHON
 
 Faça do download do anaconda (a internet é rica em tutorias para esse passo).

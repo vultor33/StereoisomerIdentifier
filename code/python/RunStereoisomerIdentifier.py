@@ -17,7 +17,7 @@ class RunStereoisomerIdentifier:
         self.__errorMessages_ = ErrorMessages()
         self.__HEADER = "CSD;Info;Metal;Formula;ID;RMSD"
         self.__pathInputFiles = pathInputFiles
-        self.__OUTPUT_FILE_NAME = pathOutputFiles + "calculating.csv"
+        self.__OUTPUT_FILE_NAME = os.path.join(pathOutputFiles, "calculating.csv")
         self.__extension = extension
         self.__calcFiles = []
         self._openCalculatingFile()
@@ -38,10 +38,12 @@ class RunStereoisomerIdentifier:
         self._calcAllFiles()
 
     def runAllFilesFromInputDirectory(self):
+        print("WARNING - runAllFilesFromInputDirectory works only on windows")
         self.__calcFiles = glob.glob(self.__pathInputFiles + '*' + self.__extension)
         self._calcAllFiles()
 
     def runAllFilesFromInputDirectoryWithLimits(self,indexInit,indexFinal):
+        print("WARNING - runAllFilesFromInputDirectoryWithLimits works only on windows")
         tempFileNames = glob.glob(self.__pathInputFiles + '*' + self.__extension)
         self.__calcFiles = tempFileNames[indexInit:indexFinal]
         del tempFileNames
@@ -50,7 +52,8 @@ class RunStereoisomerIdentifier:
 
     def _calcAllFiles(self):
         for molFile in self.__calcFiles:
-            self.__calculatingFile.write("\n{:<9};".format(molFile.partition(".")[0]))
+            baseFileName = os.path.basename(molFile)
+            self.__calculatingFile.write("\n{:<9};".format(baseFileName))
             self._calcFile(molFile)
 
         self.__calculatingFile.close()
@@ -73,7 +76,8 @@ class RunStereoisomerIdentifier:
     
     def _buildInputFileNames(self, csdRefcodesList, extension):
         for csdRefcode in csdRefcodesList:
-            self.__calcFiles.append(self.__pathInputFiles + csdRefcode + extension)
+            calcFilesI =  os.path.join(self.__pathInputFiles,csdRefcode + extension)
+            self.__calcFiles.append(calcFilesI)
 
     def _openCalculatingFile(self):
         self.__calculatingFile = open(self.__OUTPUT_FILE_NAME, "w")

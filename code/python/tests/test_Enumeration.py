@@ -4,7 +4,7 @@ from Utilities import Utilities
 from Enumeration import Enumeration
 from DataAllFormulas import allFormList
 
-# TODO -- add test to counting and to more coordination numbers
+# TODO -- alem do identificador, um arquivo counting e gerado. O counting tambem precisa ser testado aqui.
 
 def test_Enumeration():
     geoCode = 60

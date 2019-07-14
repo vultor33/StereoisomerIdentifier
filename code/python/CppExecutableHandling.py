@@ -1,4 +1,5 @@
 import os
+import platform
 from ErrorMessages import ErrorMessages
 from PrioritiesObtainer import PrioritiesObtainer
 from shutil import copyfile
@@ -42,7 +43,12 @@ class CppExecutableHandling:
 			return "a;a-L-1;0;"
 		
 		self._writeCppInput(iMetal, prior_)
-		execCommand = "StereoisomerIdentifierRmsd.exe " + self.__molFileHandling_.getBaseFileName() + "-cpp.inp"
+		if any(platform.win32_ver()):
+			execCommand = "StereoisomerIdentifierRmsd.exe "
+		else:
+			execCommand = "./StereoisomerIdentifierRmsd.exe "
+
+		execCommand += self.__molFileHandling_.getBaseFileName() + "-cpp.inp"
 		subprocess.call(execCommand, shell=True)
 		cppResultSummary = self._readCppOutput(prior_)
 

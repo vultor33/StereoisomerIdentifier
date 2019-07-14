@@ -7,8 +7,8 @@ def test_RunStereoisomerIdentifier():
     calculatingFile = os.path.join(testFilePath, "calculating.csv")
     if os.path.isfile(calculatingFile):
         os.remove(calculatingFile)
-    pathInput = testFilePath + '\\'
-    pathOutput = testFilePath + '\\'
+    pathInput = testFilePath
+    pathOutput = testFilePath
 
     extension = ".search1.mol2"
     calcFilesTemp = [
