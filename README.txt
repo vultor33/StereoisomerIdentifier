@@ -18,7 +18,7 @@ nesse caso, basta adicionar todos os arquivos em sua IDE e compilar.
 
 ATENCAO - o codigo de C++ precisa de uma pasta chamada Stereoisomerlist para rodar, a falta da pasta
 pode levar a comportamento imprevisivel.
-
+ESSA PASTA ESTA NO DROPBOX E TEM QUE SER FORNECIDA A PARTE
 
 INSTALACAO PYTHON
 
@@ -32,6 +32,10 @@ conda activate StereoIdent
 
 Instale o rdkit
 conda install --channel https://conda.anaconda.org/rdkit rdkit
+
+Avisos
+- Em uma outra tentativa houve uma mudanca na biblioteca libboost, para corrigir o problema tive que instalar o rdkit com python 3.5.5
+
 
 
 EXECUCAO
