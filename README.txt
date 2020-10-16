@@ -1,4 +1,10 @@
-INSTALACAO DO StereoisomerIdentifier
+
+
+StereoisomerIdentifier
+Um programa para identificar isomeros de complexos metalicos.
+
+
+INSTALACAO
 
 O StereoisomerIdentifier é composto por códigos na linguagem C++ e Python.
 
@@ -22,19 +28,23 @@ ESSA PASTA ESTA NO DROPBOX E TEM QUE SER FORNECIDA A PARTE
 
 INSTALACAO PYTHON
 
-Faça do download do anaconda (a internet é rica em tutorias para esse passo).
+Faça do download do anaconda.
 
 Crie um ambiente
 conda create -n StereoIdent
-
 Ative o ambiente
 conda activate StereoIdent
 
-Instale o rdkit
-conda install --channel https://conda.anaconda.org/rdkit rdkit
+BIBLIOTECAS NECESSARIAS A SEREM INSTALADAS
+conda install -c rdkit rdkit
+conda install -c anaconda pytest
+conda install numpy
 
-Avisos
-- Em uma outra tentativa houve uma mudanca na biblioteca libboost, para corrigir o problema tive que instalar o rdkit com python 3.5.5
+AVISOS
+
+- A biblioteca rdkit e uma biblioteca em desenvolvimento, entao e necessario ficar atento
+  as mudancas de versao. Em uma das minhas intalacoes, houve uma mudanca na biblioteca libboost, 
+  para corrigir o problema tive que instalar o rdkit com python 3.5.5
 
 
 
