@@ -2,6 +2,8 @@ from FormulaHandling import FormulaHandling
 from ErrorMessages import ErrorMessages
 from Graph import Graph
 
+MAXCOORDINATION = 10
+
 class PrioritiesObtainer:
 	
 	def __init__(self, molFileHandlingObject, externalPriorites):
@@ -43,11 +45,13 @@ class PrioritiesObtainer:
 	def getLigandsBondedToMetalI(self):
 		return self.__ligandsBondedToMetalI
 	
+	def getAllPriorities(self):
+		return self.__externalPriorites
+	
 	def getExternalPrioritiesOfMetalI(self):
 		priorities = []
 		for i in self.__ligandsBondedToMetalI:
 			priorities.append(self.__externalPriorites[i-1])
-		
 		return priorities
 				
 	
@@ -59,10 +63,7 @@ class PrioritiesObtainer:
 
 	def _defineFinalPriorities(self, externalPriorities):
 		InputPrioritiesToFinalPrioritiesMap = self.__enumerationFormula_.getInputPrioritiesToFinalPrioritiesMap()
-		prioritiesIndex = iter(externalPriorities)
-		for i in self.__ligandsBondedToMetalI:
-			self.__prioritiesOfMetalI.append(InputPrioritiesToFinalPrioritiesMap[next(prioritiesIndex)])
-
+		self.__prioritiesOfMetalI = [InputPrioritiesToFinalPrioritiesMap[x] for x in externalPriorities]
 
 	def _generateMolecularFormulas(self, externalPriorities):
 		self.__directFormula_.generateMolecularFormula(externalPriorities,self.__chelatesOfMetalI)
@@ -70,7 +71,7 @@ class PrioritiesObtainer:
 
 
 	def _identifierLimitationsExceptions(self):
-		if len(self.__ligandsBondedToMetalI) > 8:
+		if len(self.__ligandsBondedToMetalI) > MAXCOORDINATION:
 			raise Exception(self.__errorMessages_.getMaxLigandsError())
 		elif len(self.__ligandsBondedToMetalI) == 0:
 			raise Exception(self.__errorMessages_.getNoLigandsError())
