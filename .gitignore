@@ -10,6 +10,8 @@ code/python/StereoisomerList*
 code/python/SubstratalScaffold*
 code/python/*-enumeration*
 code/python/tests/test_files/calculating.csv
+code/ident10/StereoisomerListCPP*
+
 *.log
 *.o
 *.exe
