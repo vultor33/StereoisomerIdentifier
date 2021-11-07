@@ -1,8 +1,8 @@
 import os
 import io
 import ntpath
-from ErrorMessages import ErrorMessages
-from Utilities import Utilities
+from polycip.ErrorMessages import ErrorMessages
+from polycip.Utilities import Utilities
 
 
 # Um objeto para lidar com o formato mol
@@ -127,7 +127,6 @@ class MolFileHandling:
 			i+=1
 			
 		self.__molFile.write("M  END\n")
-		self.__molFile.close()
 		
 	def _writeMol2FileFormat(self):
 		linesWithMetalBonds = self._getListOfLinesWithMetalBonds()

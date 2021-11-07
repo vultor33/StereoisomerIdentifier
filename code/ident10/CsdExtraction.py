@@ -27,12 +27,17 @@ def refineCoordinationPolyhedron(fileMol2Name):
 
 def extractCoordinationPolyhedron(fileMol2Name):
     molFileHandling_ = MolFileHandling(fileMol2Name)
-    molFileHandling_.writeMolFile()
-    extPrior_ = ExternalPrioritiesObtainer(molFileHandling_.getTemporaryMolName())
+    molstream = molFileHandling_.writemolstream()
+    extPrior_ = ExternalPrioritiesObtainer(molFileHandling_.getTemporaryMolName(), molstream)
     prior_ = PrioritiesObtainer(molFileHandling_, extPrior_.getPriorities())
     metalsList = molFileHandling_.getMetalsInMol2FileList()
-    prior_.calculateLigandsPriorities(metalsList[0]) # SO O PRIMEIRO METAL POR ENQUANTO
+    prior_ = generatePriorities(self, molFileHandling_, extPrior_, metalsList[0])
     return prior_, molFileHandling_
+
+def generatePriorities(self, molFileHandling_, extPrior_, iMetal):
+    prior_ = PrioritiesObtainer(molFileHandling_, extPrior_.getPriorities())
+    prior_.calculateLigandsPriorities(iMetal)
+    return prior_
 
 def centerAndNormalize(lcoords):
     X = []

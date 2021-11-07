@@ -1,5 +1,5 @@
 from rdkit import Chem
-from ErrorMessages import ErrorMessages
+from polycip.ErrorMessages import ErrorMessages
 
 class ExternalPrioritiesObtainer:
 	"""Class to calculate CIP rules from a mol file
