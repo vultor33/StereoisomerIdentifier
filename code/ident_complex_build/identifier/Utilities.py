@@ -1,5 +1,5 @@
 import os
-from polycip.ErrorMessages import ErrorMessages
+from identifier.ErrorMessages import ErrorMessages
 
 class Utilities:
 	def __init__(self):

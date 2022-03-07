@@ -1,25 +1,20 @@
 import os
 import io
 import ntpath
-from polycip.ErrorMessages import ErrorMessages
-from polycip.Utilities import Utilities
-
-
-# Um objeto para lidar com o formato mol
-# Um objeto para lidar com o executavel cpp
-# Um struct com list atoms, bond, equivalence rank e etc.
+from identifier.ErrorMessages import ErrorMessages
+from identifier.Utilities import Utilities
 
 class MolFileHandling:
 	"""Class to handle mol files"""
 
-	def __init__(self, fileName):
+	def __init__(self, fileName, fileStream = ""):
 		#objects
 		self.__errorMessages_ = ErrorMessages()
 		self.__util_ = Utilities()
 
 		#constants
 		self.__flagMolecule = "@<TRIPOS>MOLECULE"
-		self.	__flagAtom = "@<TRIPOS>ATOM"
+		self.__flagAtom = "@<TRIPOS>ATOM"
 		self.__flagBond = "@<TRIPOS>BOND"
 		self.__temporaryFilePreffix = "temporaryMol-"
 
@@ -27,7 +22,7 @@ class MolFileHandling:
 		self.__molFile = None
 		self.__molFormat = ""
 		self.__fileMol2Name = ""
-		self.__fileStream = ""
+		self.__fileStream = fileStream
 		self.__molName = ""
 		self.__listAtoms = []
 		self.__listBonds = []
@@ -185,11 +180,12 @@ class MolFileHandling:
 		self.__molFile = open(temporaryMolName + self.__molFormat, "w")
 		
 	def _readMol2File(self):
-		mol2Input = open(self.__fileMol2Name + ".mol2","r")
-		self.__fileStream = mol2Input.read().splitlines()
+		if len(self.__fileStream) == 0:
+			mol2Input = open(self.__fileMol2Name + ".mol2","r")
+			self.__fileStream = mol2Input.read().splitlines()
+			mol2Input.close()
 		self._extractMol2Info()
 		self._groupBondsInPairs()
-		mol2Input.close()
 
 	def _extractMol2Info(self):
 		for i in range(len(self.__fileStream)):
@@ -214,8 +210,8 @@ class MolFileHandling:
 			if self.__util_.isMetal(listAtomsColumns[5]):
 				self.__metalsInMol2File.append(i)
 			
-		if len(self.__metalsInMol2File) < 1:
-			raise Exception(self.__errorMessages_.getNoMetalError())
+#		if len(self.__metalsInMol2File) < 1:
+#			raise Exception(self.__errorMessages_.getNoMetalError())
 
 	def _checkExtension(self, fileName):
 		self.__fileMol2Name = ""

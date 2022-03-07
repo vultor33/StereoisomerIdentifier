@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import re
 
 def build(geometry, permutation, colors, chelates):
     colors = applySymmetry(colors, permutation)
@@ -51,7 +52,6 @@ def create_dummy_points(atom1, atom2):
 # USER DEFINED ####################################################################
 ###################################################################################
 
-import re
 
 colors = ['C', 'O', 'N', 'P', 'I', 'B', 'Se', 'Ca', 'Na', 'Se']
 colorDent = 'H'

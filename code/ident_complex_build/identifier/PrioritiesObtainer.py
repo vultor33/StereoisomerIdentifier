@@ -1,6 +1,6 @@
-from polycip.FormulaHandling import FormulaHandling
-from polycip.ErrorMessages import ErrorMessages
-from polycip.Graph import Graph
+from identifier.FormulaHandling import FormulaHandling
+from identifier.ErrorMessages import ErrorMessages
+from identifier.Graph import Graph
 
 MAXCOORDINATION = 10
 

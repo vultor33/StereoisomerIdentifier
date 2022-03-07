@@ -1,7 +1,7 @@
 from collections import Counter
 import operator
-from polycip.ErrorMessages import ErrorMessages
-from polycip.Utilities import Utilities
+from identifier.ErrorMessages import ErrorMessages
+from identifier.Utilities import Utilities
 
 def applyNewCIP(priorities, chelations):
     fhandling_ = FormulaHandling()

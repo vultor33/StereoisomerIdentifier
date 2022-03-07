@@ -1,5 +1,5 @@
 from collections import defaultdict
-from polycip.ErrorMessages import ErrorMessages
+from identifier.ErrorMessages import ErrorMessages
 
 class Graph(object):
 	""" Graph data structure, undirected by default. """
